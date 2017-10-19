@@ -147,7 +147,9 @@ uint8_t CmdParserClass::stringParser(String s)
 }
 void CmdParserClass::WriteErrMsg(String s)
 {
-  s.toCharArray(errMsg,MAX_ERR_MSG);
+  int l=s.length();
+  Log.Verbose("Error:");Log.Verbose(s);Log.Verbose("\tlength=");Log.Verbose(String(l,DEC));Log.Verbose("\n");
+  if(l<=MAX_ERR_MSG) s.toCharArray(errMsg,l);
   return;
 }
 
