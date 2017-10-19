@@ -37,9 +37,9 @@ Log.AutoCR=false;
   Log.Info(HS.SetEventDay(dowTuesday,Event3,3,evEN,swOFF,sw1));Log.Info("\n");
   Log.Info(HS.SetEventDay(dowTuesday,Event4,4,evEN,swON,sw1));Log.Info("\n");
   Log.Info(HS.SetEventDay(dowTuesday,Event5,5,evEN,swOFF,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventOnce(0,HS.SetTimeEvent(0,1,0,26,9,2017),evEN,swON,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventOnce(1,HS.SetTimeEvent(0,1,5,26,9,2017),evEN,swOFF,sw1));Log.Info("\n");
-  setTime(23,59,50,24,9,17); // set time
+  Log.Info(HS.SetEventOnce(0,HS.SetTimeEvent(0,1,0,26,10,2017),evEN,swON,sw1));Log.Info("\n");
+  Log.Info(HS.SetEventOnce(1,HS.SetTimeEvent(0,1,5,26,10,2017),evEN,swOFF,sw1));Log.Info("\n");
+  setTime(23,59,50,16,10,17); // set time
    //time_t now_t=now();
 //   time_t now_t;
 //   now_t=HS.SetTimeOfDay(3,10,10);
@@ -88,15 +88,50 @@ void ExCommand(uint8_t cmd)
       {
         Log.Info("\nCommand set time: ");
         uint8_t hh=CP.Field[1]; Log.Verbose(String(hh));Log.Verbose(":");
-      uint8_t mm=CP.Field[2]; Log.Verbose(String(mm));Log.Verbose(":");
-      uint8_t ss=CP.Field[3]; Log.Verbose(String(ss));Log.Verbose("\t");
-      uint8_t dd=CP.Field[4]; Log.Verbose(String(dd));Log.Verbose("/");
-      uint8_t mo=CP.Field[5]; Log.Verbose(String(mo));Log.Verbose("/");
-      uint8_t yy=CP.Field[6]; Log.Verbose(String(yy));Log.Verbose("\n");
+        uint8_t mm=CP.Field[2]; Log.Verbose(String(mm));Log.Verbose(":");
+        uint8_t ss=CP.Field[3]; Log.Verbose(String(ss));Log.Verbose("\t");
+        uint8_t dd=CP.Field[4]; Log.Verbose(String(dd));Log.Verbose("/");
+        uint8_t mo=CP.Field[5]; Log.Verbose(String(mo));Log.Verbose("/");
+        uint8_t yy=CP.Field[6]; Log.Verbose(String(yy));Log.Verbose("\n");
         setTime(hh,mm,ss,dd,mo,yy);
         //Log.Info(HS.TimeToStr(now()));
         //Log.Info("\n");
       }
+    break;
+    case 2: //set alarm eventDay
+    //format: #2,dow,evnum,quarter,en,on/off,sw1.
+    if (CP.Nfield==7)
+    {
+      Log.Info("\nCommand set DayEvent: ");
+      uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose(",");
+      uint8_t _evnum=CP.Field[2]; Log.Verbose(String(_evnum));Log.Verbose(",");
+      uint8_t _Tqua=CP.Field[3]; Log.Verbose(String(_Tqua));Log.Verbose(",");
+      uint8_t _en=CP.Field[4]; Log.Verbose(String(_en));Log.Verbose(",");
+      uint8_t _onoff=CP.Field[5]; Log.Verbose(String(_onoff));Log.Verbose(",");
+      uint8_t _swn=CP.Field[6]; Log.Verbose(String(_swn));Log.Verbose("\n");
+      Log.Info(HS.SetEventDay(_dow,_evnum,_Tqua,_en,_onoff,_swn));Log.Info("\n");
+      //HS.WrEEPROMday(HS.Sched.WeekSched[_dow-1]);
+    }
+    break;
+    case 3: //Save eventDay
+    //format: #3,dow.
+    if (CP.Nfield==2)
+    {
+      Log.Info("\nCommand READ DayEvent: ");
+      uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose("\n");      
+      HS.WrEEPROMday(HS.Sched.WeekSched[_dow-1]);
+    }
+    break;
+    case 4: //Read alarm eventDay
+    //format: #4,dow,evnum.
+    if (CP.Nfield==3)
+    {
+      Log.Info("\nCommand READ DayEvent: ");
+      uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose(",");
+      uint8_t _evnum=CP.Field[2]; Log.Verbose(String(_evnum));Log.Verbose("\n");
+      HS.RdEEPROMday(_dow);
+      Log.Info(HS.EventToStrShort(HS.Sched.WeekSched[_dow-1].Event[_evnum]));Log.Info("\n");      
+    }
     break;
     default:
      Log.Error("\nCommand Unknown\n");
@@ -295,7 +330,7 @@ void UpdateSched()
   Log.Info("update Schedule\n");
   int dow=weekday()-1;
 //Serial.print(dow); 
-  HS.RdEEPROMday(dow+1);
+  HS.RdEEPROMday(dow);
     if (HS.Sched.WeekSched[dow].Event[Event0].EventCtrl.isEnabled==evEN)
     {
       id0=Alarm.timerOnce(HS.QuartToTime(HS.Sched.WeekSched[dow].Event[Event0].EvTimeQ), Event0R);
