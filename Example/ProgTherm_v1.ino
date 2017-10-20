@@ -8,26 +8,50 @@
  * For memory optimization the resolution is 15 minutes.
  * Intially 4 events per day are allocated
  */
- #include "CmdParserClass.h"
+#include "CmdParserClass.h"
 #include "Heater_scheduler_class.h"
 #include <TimeAlarms.h>
-
-//#include <Logging_class.h>
-//void UpdateSched();
-//void digitalClockDisplay();
-//void ExCommand(uint8_t);
+//
+typedef enum {_Manual, _Daily, _Once, _Out} Mode_en;
+typedef enum {_ON,_OFF} Heater_en;
+typedef struct 
+{
+  Log_en Uartlev; //log level for uart
+  Log_en ZBlev; //log level for ZigBee
+  Mode_en Mode; //Mode of operation
+  uint8_t ClockPer; //period of clock visualization in secs.
+  int TimeAdj; //time adjust
+  Heater_en HeaterStatus; //Status of heater
+} StatusSt;
+//
+StatusSt HStat; //Declare the status structure
 AlarmId id0,id1,id2,id3,id4,id5,idse0,idse1;
 EventNum_sc ev; //Global var for event of the day 
 HeaterSchedulerCs HS=HeaterSchedulerCs(); //class instance
 CmdParserClass CP=CmdParserClass();
+int loop_c=0;
 String usbCommand="";
+//
 void setup() {
   // put your setup code here, to run once:
-Serial.begin(9600);
-Log.LogLevel=_Verbose;
+Serial.begin(38400);
+uint8_t addr=5;
+HStat.Uartlev=_Verbose;
+HStat.ZBlev=_Info;
+HStat.Mode=_Daily;
+HStat.ClockPer=60;
+HStat.TimeAdj=0;
+EEPROM.put(addr,HStat);
+Log.Verbose("EEPROM write at=");
+Log.Verbose(String(addr));Log.Verbose("\n");
+Log.Verbose("Struct Size=");
+Log.Verbose(String(sizeof(HStat)));Log.Verbose("\n");
+EEPROM.get(addr,HStat);
+Log.LogLevel=HStat.Uartlev;
 Log.ZBen=true;
-Log.ZBLogLevel=_Error;
+Log.ZBLogLevel=HStat.ZBlev;
 Log.AutoCR=false;
+ 
 //  Serial.print("Day Size=");
 //  Serial.println(sizeof(HS.Sched.WeekSched[0]),DEC);
   HS.EEPromDefault();
@@ -53,7 +77,7 @@ Log.AutoCR=false;
 void loop() {
   // put your main code here, to run repeatedly:
 
-  digitalClockDisplay();
+  //digitalClockDisplay();
 
   if (Serial.available() > 0) 
    {
@@ -72,8 +96,13 @@ void loop() {
       ExCommand(CP.Cmd);
     }
    }
+   
    Alarm.delay(1000); // wait one second between clock display
-
+  if(loop_c++==HStat.ClockPer)
+   {
+    digitalClockDisplay();
+    loop_c=0;
+   }
 }//end loop
 /*
  * Commands
@@ -86,7 +115,8 @@ void ExCommand(uint8_t cmd)
       //format: #1,hh,mm,ss,dd,mo,yy.
       if (CP.Nfield==7)
       {
-        Log.Info("\nCommand set time: ");
+        
+        Log.Debug("\nCommand set time: ");
         uint8_t hh=CP.Field[1]; Log.Verbose(String(hh));Log.Verbose(":");
         uint8_t mm=CP.Field[2]; Log.Verbose(String(mm));Log.Verbose(":");
         uint8_t ss=CP.Field[3]; Log.Verbose(String(ss));Log.Verbose("\t");
@@ -94,6 +124,7 @@ void ExCommand(uint8_t cmd)
         uint8_t mo=CP.Field[5]; Log.Verbose(String(mo));Log.Verbose("/");
         uint8_t yy=CP.Field[6]; Log.Verbose(String(yy));Log.Verbose("\n");
         setTime(hh,mm,ss,dd,mo,yy);
+        Log.Info("\n#1:OK\n");
         //Log.Info(HS.TimeToStr(now()));
         //Log.Info("\n");
       }
@@ -102,14 +133,16 @@ void ExCommand(uint8_t cmd)
     //format: #2,dow,evnum,quarter,en,on/off,sw1.
     if (CP.Nfield==7)
     {
-      Log.Info("\nCommand set DayEvent: ");
+      Log.Debug("\nCommand set DayEvent: ");
       uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose(",");
       uint8_t _evnum=CP.Field[2]; Log.Verbose(String(_evnum));Log.Verbose(",");
       uint8_t _Tqua=CP.Field[3]; Log.Verbose(String(_Tqua));Log.Verbose(",");
       uint8_t _en=CP.Field[4]; Log.Verbose(String(_en));Log.Verbose(",");
       uint8_t _onoff=CP.Field[5]; Log.Verbose(String(_onoff));Log.Verbose(",");
       uint8_t _swn=CP.Field[6]; Log.Verbose(String(_swn));Log.Verbose("\n");
+      Log.Info("\n#2:");
       Log.Info(HS.SetEventDay(_dow,_evnum,_Tqua,_en,_onoff,_swn));Log.Info("\n");
+      Log.Info("#2:OK\n");
       //HS.WrEEPROMday(HS.Sched.WeekSched[_dow-1]);
     }
     break;
@@ -117,24 +150,27 @@ void ExCommand(uint8_t cmd)
     //format: #3,dow.
     if (CP.Nfield==2)
     {
-      Log.Info("\nCommand READ DayEvent: ");
+      Log.Debug("\nCommand Store DayEvents ");
       uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose("\n");      
       HS.WrEEPROMday(HS.Sched.WeekSched[_dow-1]);
+      Log.Info("\n#3:OK\n");
     }
     break;
     case 4: //Read alarm eventDay
     //format: #4,dow,evnum.
     if (CP.Nfield==3)
     {
-      Log.Info("\nCommand READ DayEvent: ");
+      Log.Debug("\nCommand READ DayEvent: ");
       uint8_t _dow=CP.Field[1]; Log.Verbose(String(_dow));Log.Verbose(",");
       uint8_t _evnum=CP.Field[2]; Log.Verbose(String(_evnum));Log.Verbose("\n");
       HS.RdEEPROMday(_dow);
-      Log.Info(HS.EventToStrShort(HS.Sched.WeekSched[_dow-1].Event[_evnum]));Log.Info("\n");      
+      Log.Info("\n#4:");
+      Log.Info(HS.EventToStrLong(HS.Sched.WeekSched[_dow-1].Event[_evnum]));Log.Info("\n");   
+      Log.Info("#4:OK\n");   
     }
     break;
     default:
-     Log.Error("\nCommand Unknown\n");
+     Log.Error("\n#Command Unknown\n");
   }
   return;
 }

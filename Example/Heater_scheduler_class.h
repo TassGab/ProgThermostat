@@ -56,6 +56,7 @@ class HeaterSchedulerCs
     time_t SetTimeEvent(uint8_t, uint8_t, uint8_t,uint8_t, uint8_t, uint8_t);
     String EventToStrShort(EventType_sc);
     String EventOnceToStrShort(EventFuture_sc); 
+    String EventToStrLong(EventType_sc);
     void RdEEPROMday(timeDayOfWeek_t);
     void RdEEPROMevent(uint8_t);
     void WrEEPROMday(DaySchedule_sc);
@@ -63,10 +64,10 @@ class HeaterSchedulerCs
     void EEPromDefault();
     
   private:
-    int GetEEoffAddress=0;
+    int GetEEoffAddress=20;
     int GetEEdaystructsize=0;
     int GetEEeventstructsize=0;
-    String EventToStrLong(EventType_sc);
+    
     void DayDeepCp(DaySchedule_sc, DaySchedule_sc); 
     void EvDeepCp(EventFuture_sc,EventFuture_sc);
     
