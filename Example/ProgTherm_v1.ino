@@ -29,7 +29,7 @@ AlarmId id0,id1,id2,id3,id4,id5,idse0,idse1;
 EventNum_sc ev; //Global var for event of the day 
 HeaterSchedulerCs HS=HeaterSchedulerCs(); //class instance
 CmdParserClass CP=CmdParserClass();
-int loop_c=0;
+int loop_c=1;
 String usbCommand="";
 //
 void setup() {
@@ -101,7 +101,7 @@ void loop() {
   if(loop_c++==HStat.ClockPer)
    {
     digitalClockDisplay();
-    loop_c=0;
+    loop_c=1;
    }
 }//end loop
 /*
@@ -187,11 +187,11 @@ void ExCommand(uint8_t cmd)
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id0);
   // optional, but safest to "forget" the ID after memory recycled
@@ -210,11 +210,11 @@ void Event1R() {
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id1);
   // optional, but safest to "forget" the ID after memory recycled
@@ -233,11 +233,11 @@ void Event2R() {
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id2);
   // optional, but safest to "forget" the ID after memory recycled
@@ -256,11 +256,11 @@ void Event3R() {
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id3);
   // optional, but safest to "forget" the ID after memory recycled
@@ -279,11 +279,11 @@ void Event4R() {
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id4);
   // optional, but safest to "forget" the ID after memory recycled
@@ -302,11 +302,11 @@ void Event5R() {
 
   if (HS.Sched.WeekSched[dow].Event[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(id5);
   // optional, but safest to "forget" the ID after memory recycled
@@ -325,11 +325,11 @@ void EventOnce0() {
 
   if (HS.Sched.EventFuture[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(idse0);
   // optional, but safest to "forget" the ID after memory recycled
@@ -348,11 +348,11 @@ void EventOnce1() {
 
   if (HS.Sched.EventFuture[ev].EventCtrl.swTurn==swON)
   {
-    Log.Info("Switch ON\n");
+    TurnON();
   }
   else
   {
-    Log.Info("Switch OFF\n");
+    TurnOFF();
   }
   Alarm.free(idse1);
   // optional, but safest to "forget" the ID after memory recycled
@@ -409,7 +409,28 @@ void UpdateSched()
       Log.Info(HS.EventToStrShort(HS.Sched.WeekSched[dow].Event[Event5]));
       Log.Info("\n");
     }
-    HS.RdEEPROMevent(0);
+//    HS.RdEEPROMevent(0);
+//    if (HS.Sched.EventFuture[0].EventCtrl.isEnabled==evEN)
+//    {
+//      idse0=Alarm.triggerOnce(HS.Sched.EventFuture[0].TimeEv, EventOnce0);
+//      Log.Info("idse0: ");
+//      Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[0]));
+//      Log.Info("\n");
+//    }
+//    HS.RdEEPROMevent(1);
+//    if (HS.Sched.EventFuture[1].EventCtrl.isEnabled==evEN)
+//    {
+//      idse1=Alarm.triggerOnce(HS.Sched.EventFuture[1].TimeEv, EventOnce1);
+//      Log.Info("idse1: ");
+//      Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[1]));
+//      Log.Info("\n");
+//    }
+      return;
+}
+
+void UpdateSchedOnce()
+{
+  HS.RdEEPROMevent(0);
     if (HS.Sched.EventFuture[0].EventCtrl.isEnabled==evEN)
     {
       idse0=Alarm.triggerOnce(HS.Sched.EventFuture[0].TimeEv, EventOnce0);
@@ -425,7 +446,17 @@ void UpdateSched()
       Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[1]));
       Log.Info("\n");
     }
-      return;
+}
+// 
+void TurnON()
+{
+  Log.Info("\nHeater ON\n");
+}
+
+void TurnOFF()
+{
+
+  Log.Info("\nHeater OFF\n");
 }
 void digitalClockDisplay() {
   // digital clock display of the time
