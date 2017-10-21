@@ -1,2 +1,1 @@
-Example with improved class
-class ProgTherm for status and some functions
+Example of library use and initial functionalities
