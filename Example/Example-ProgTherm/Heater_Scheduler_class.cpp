@@ -9,18 +9,7 @@ HeaterSchedulerCs::HeaterSchedulerCs(void)
   GetEEeventstructsize=sizeof(Sched.EventFuture[0]);
   return;
 }
-//int HeaterSchedulerCs::GetEEoffAddress()
-// {
-//  return 0; 
-// }
-// int HeaterSchedulerCs::GetEEdaystructsize()
-// {
-//  return sizeof(Sched. WeekSched[0]);
-// }
-// int HeaterSchedulerCs::GetEEeventstructsize()
-// {
-//  return sizeof(Sched.EventFuture[0]);
-//  }
+
 String HeaterSchedulerCs::SetEventDay(timeDayOfWeek_t dow, uint8_t Evnum, TimeQuarter_sc TimeQ, EventState_sc En, SwitchState_sc SwSt, SwitchNum_sc SwN)
  {
    String s="Dow: ";   
@@ -55,7 +44,7 @@ time_t HeaterSchedulerCs::QuartToTime(TimeQuarter_sc qt)
   time_t tt;
   if (qt==0)
   {
-    tt=5; //one second  after midnight
+    tt=5; //5 seconds  after midnight
   }
   else
   {
@@ -154,11 +143,17 @@ String HeaterSchedulerCs::TimeToStr(time_t tt)
  void HeaterSchedulerCs::RdEEPROMday(timeDayOfWeek_t dow)
  {
    DaySchedule_sc daysc;
-   int addr=int(GetEEdaystructsize*(dow-1))+GetEEoffAddress;
+   int addr=int(GetEEdaystructsize*(dow))+GetEEoffAddress;
    EEPROM.get(addr,daysc);
-   DayDeepCp(daysc,Sched.WeekSched[dow-1]);
+   Sched.WeekSched[dow]=DayDeepCp(daysc);
    Log.Verbose("EEPROM read at=");
    Log.Verbose(String(addr));Log.Verbose("\n");
+   for (uint8_t i=0; i< nEventPerDay ;i++){
+    //Log.Verbose(SetEventDay(dow,i,daysc.Event[i].EvTimeQ,daysc.Event[i].EventCtrl.isEnabled,daysc.Event[i].EventCtrl.nSwitch,daysc.Event[i].EventCtrl.swTurn));Log.Verbose("\n");
+    Log.Verbose("\nEE Read: ");Log.Verbose(EventToStrShort(daysc.Event[i]));Log.Verbose("\n");
+    Log.Verbose("\nSched Read: ");Log.Verbose(EventToStrShort(Sched.WeekSched[dow].Event[i]));Log.Verbose("\n");    
+   }
+   
  }
 void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
  {
@@ -166,7 +161,7 @@ void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
    int addr=0;
    addr=int(GetEEeventstructsize*(_evnum))+GetEEdaystructsize*7+GetEEoffAddress;
    EEPROM.get(addr,evsc);
-   EvDeepCp(evsc,Sched.EventFuture[_evnum]);
+   Sched.EventFuture[_evnum]=EvDeepCp(evsc);
    Log.Verbose("EEPROM read at=");
    Log.Verbose(String(addr));Log.Verbose("\n");
    return;
@@ -175,6 +170,8 @@ void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
  {
   int addr;  
   addr=int(GetEEdaystructsize*(daysc.dow-1))+GetEEoffAddress;
+  for(int _add=addr;_add<=(addr+GetEEdaystructsize);_add++){
+    EEPROM.write(_add,0);}//delete
   EEPROM.put(addr,daysc);
   Log.Verbose("EEPROM write at=");
   Log.Verbose(String(addr));Log.Verbose("\n");
@@ -184,12 +181,16 @@ void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
  {
   int addr;  
   addr=int(GetEEeventstructsize*(_evnum))+GetEEdaystructsize*7+GetEEoffAddress;
+  for(int _add=addr;_add<=(addr+GetEEeventstructsize);_add++){
+    EEPROM.write(_add,0);}
   EEPROM.put(addr,evsc);
   Log.Verbose("EEPROM write at=");
   Log.Verbose(String(addr));Log.Verbose("\n");
  }
- void HeaterSchedulerCs::DayDeepCp(DaySchedule_sc orig, DaySchedule_sc dest)
+ DaySchedule_sc HeaterSchedulerCs::DayDeepCp(DaySchedule_sc orig)
  {
+   
+   DaySchedule_sc dest;
    dest.dow=orig.dow;
    for (int i=0; i< nEventPerDay ;i++)
    {
@@ -197,26 +198,93 @@ void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
     dest.Event[i].EventCtrl.isEnabled=orig.Event[i].EventCtrl.isEnabled;
     dest.Event[i].EventCtrl.nSwitch=orig.Event[i].EventCtrl.nSwitch;
     dest.Event[i].EventCtrl.swTurn=orig.Event[i].EventCtrl.swTurn;
-    return;
+    Log.Verbose("\nCopy Read: ");Log.Verbose(EventToStrShort(dest.Event[i]));Log.Verbose("\n");
    }
+   return dest;
  }
- void HeaterSchedulerCs::EvDeepCp(EventFuture_sc orig,EventFuture_sc dest)
+ EventFuture_sc HeaterSchedulerCs::EvDeepCp(EventFuture_sc orig)
  {
+   EventFuture_sc dest;
    dest.TimeEv=orig.TimeEv;
    dest.EventCtrl.isEnabled=orig.EventCtrl.isEnabled;
    dest.EventCtrl.nSwitch=orig.EventCtrl.nSwitch;
    dest.EventCtrl.swTurn=orig.EventCtrl.swTurn;
-   return;
+   return dest;
  }
  void HeaterSchedulerCs::EEPromDefault()
  {
-  for (int _dow=0; _dow<7; _dow++)
+  for (int _dow=1; _dow<=7; _dow++)
   {
     Sched.WeekSched[_dow].dow=_dow+1;
-    WrEEPROMday(Sched.WeekSched[_dow]);
+    #ifdef debug
+    Log.Info(SetEventDay(_dow,0,0,evEN,swON,sw1));Log.Info("\n");
+    Log.Info(SetEventDay(_dow,1,1,evEN,swOFF,sw1));Log.Info("\n");
+    Log.Info(SetEventDay(_dow,2,2,evEN,swON,sw1));Log.Info("\n");
+    Log.Info(SetEventDay(_dow,3,3,evEN,swOFF,sw1));Log.Info("\n");
+    Log.Info(SetEventDay(_dow,4,4,evEN,swON,sw1));Log.Info("\n");
+    Log.Info(SetEventDay(_dow,5,5,evEN,swOFF,sw1));Log.Info("\n");
+
+    #else
+    Sched.WeekSched[_dow].Event[0].EvTimeQ=26; //6:30
+    Sched.WeekSched[_dow].Event[0].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[0].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[0].EventCtrl.swTurn=swON;
+    Sched.WeekSched[_dow].Event[1].EvTimeQ=32; //8:00
+    Sched.WeekSched[_dow].Event[1].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[1].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[1].EventCtrl.swTurn=swOFF;
+    Sched.WeekSched[_dow].Event[2].EvTimeQ=48; //12:00
+    Sched.WeekSched[_dow].Event[2].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[2].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[2].EventCtrl.swTurn=swON;
+    Sched.WeekSched[_dow].Event[3].EvTimeQ=56; //14:00
+    Sched.WeekSched[_dow].Event[3].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[3].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[3].EventCtrl.swTurn=swOFF;
+    Sched.WeekSched[_dow].Event[4].EvTimeQ=64; //16:00
+    Sched.WeekSched[_dow].Event[4].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[4].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[4].EventCtrl.swTurn=swON;
+    Sched.WeekSched[_dow].Event[5].EvTimeQ=100; //22:30
+    Sched.WeekSched[_dow].Event[5].EventCtrl.isEnabled=evEN;
+    Sched.WeekSched[_dow].Event[5].EventCtrl.nSwitch=sw1;
+    Sched.WeekSched[_dow].Event[5].EventCtrl.swTurn=swOFF;
+    #endif
+    WrEEPROMday(Sched.WeekSched[_dow-1]);
   }
+  #ifdef debug
+  Log.Info(SetEventOnce(0,SetTimeEvent(0,1,0,26,10,2017),evEN,swON,sw1));Log.Info("\n");
+  Log.Info(SetEventOnce(1,SetTimeEvent(0,1,5,26,10,2017),evEN,swOFF,sw1));Log.Info("\n");
+  #else
+  Sched.EventFuture[0].TimeEv=SetTimeEvent(16,0,0,5,11,17); //
+  Sched.EventFuture[0].EventCtrl.isEnabled=evEN;
+  Sched.EventFuture[0].EventCtrl.nSwitch=sw1;
+  Sched.EventFuture[0].EventCtrl.swTurn=swON;  
+  Sched.EventFuture[1].TimeEv=SetTimeEvent(23,0,0,5,11,17); //
+  Sched.EventFuture[1].EventCtrl.isEnabled=evEN;
+  Sched.EventFuture[1].EventCtrl.nSwitch=sw1;
+  Sched.EventFuture[1].EventCtrl.swTurn=swOFF;
+  #endif
   WrEEPROMevent(0,Sched.EventFuture[0]);
   WrEEPROMevent(1,Sched.EventFuture[1]);
+  Sched.EEPROMempty=1;
+  int addr;  
+  addr=int(GetEEeventstructsize*2+GetEEdaystructsize*7+GetEEoffAddress);
+  EEPROM.write(addr,Sched.EEPROMempty);
+  Log.Verbose("\nCheck EEPROM at ");Log.Verbose(String(addr));Log.Verbose("\n");
+  Log.Debug("\nEEPROM Default written");
  }
- 
-
+ uint8_t HeaterSchedulerCs::GetEEPromEmpty()
+ {
+  int addr;  
+  addr=int(GetEEeventstructsize*2+GetEEdaystructsize*7+GetEEoffAddress);
+  Sched.EEPROMempty=EEPROM.read(addr);
+  Log.Verbose("\nCheck EEPROM at ");Log.Verbose(String(addr));Log.Verbose(" Val=");Log.Verbose(String(Sched.EEPROMempty));Log.Verbose("\n");
+  return Sched.EEPROMempty;
+ }
+void HeaterSchedulerCs::ClearEEProm()
+ {
+  for (int i = 0 ; i < EEPROM.length() ; i++) {
+    EEPROM.write(i, 0);
+  }
+ }

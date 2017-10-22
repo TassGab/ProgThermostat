@@ -41,4 +41,13 @@ void StatusCs::ReadFromEEProm()
  Log.ZBLogLevel=Status.ZBlev;
  Log.AutoCR=false;
 }
-
+void StatusCs::ChangePar(Log_en _Uartlev,Log_en _ZBlev,Mode_en _Mode,uint8_t _ClockPer, int _TimeAdj)
+{
+ Status.Uartlev=_Uartlev;
+ Status.ZBlev=_ZBlev;
+ Status.Mode=_Mode;
+ Status.ClockPer=_ClockPer;
+ Status.TimeAdj=_TimeAdj;
+ SaveToEEProm();
+ return;
+}

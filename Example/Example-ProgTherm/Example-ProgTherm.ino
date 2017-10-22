@@ -2,7 +2,7 @@
  * 10/09/2017
  * Gabriele Tasselli
  * 
- * Scheduler for Chorno Thermostat
+ * Scheduler for Programmable Thermostat
  * weekly scheduler to be used with TimeAlarm library
  * The schedule is stored in the eeprom
  * For memory optimization the resolution is 15 minutes.
@@ -12,39 +12,6 @@
 #include "Heater_scheduler_class.h"
 #include "ProgThermClass.h"
 #include <TimeAlarms.h>
-//
-//typedef enum {_Manual, _Daily, _Once, _Out} Mode_en;
-//typedef enum {_ON,_OFF} Heater_en;
-
-//class 
-//{
-//  public:
-//  Log_en Uartlev; //log level for uart
-//  Log_en ZBlev; //log level for ZigBee
-//  Mode_en Mode; //Mode of operation
-//  uint8_t ClockPer; //period of clock visualization in secs.
-//  int TimeAdj; //time adjust
-//  Heater_en HeaterStatus; //Status of heater
-//  EventNum_sc EvCalled; //Event number called
-//  void NextState(Mode_en);
-//  void BackLastState();
-//  private:
-//  Mode_en LastState;
-//} StatusCs;
-//void StatusCs::NextState(Mode_en nextMode)
-//{
-//  LastState=Mode;
-//  Mode=nextMode;
-//  return;
-//}
-//void StatusCs::BackLastState()
-//{
-//  Mode_en tempstate=LastState;
-//  LastState=Mode;
-//  Mode=tempstate;
-//  return;
-//}
-//
 
 AlarmId id0,id1,id2,id3,id4,id5,idse0,idse1;
 //EventNum_sc ev; //Global var for event of the day 
@@ -57,53 +24,26 @@ String usbCommand="";
 void setup() {
   // put your setup code here, to run once:
 Serial.begin(38400);
-//uint8_t addr=5;
-//HStat.Uartlev=_Verbose;
-//HStat.ZBlev=_Info;
-//HStat.Mode=_Daily;
-//HStat.ClockPer=60;
-//HStat.TimeAdj=0;
-//EEPROM.put(addr,HStat);
-//Log.Verbose("EEPROM write at=");
-//Log.Verbose(String(addr));Log.Verbose("\n");
-//Log.Verbose("Struct Size=");
-//Log.Verbose(String(sizeof(HStat)));Log.Verbose("\n");
-//EEPROM.get(addr,HStat);
-//Log.LogLevel=HStat.Uartlev;
-//Log.ZBen=true;
-//Log.ZBLogLevel=HStat.ZBlev;
-//Log.AutoCR=false;
+
+//HS.ClearEEProm();
+if(HS.GetEEPromEmpty()==0) 
+  {
+    Log.Debug("\nEEPROM write default...\n");
+    HS.EEPromDefault();
+    HStat.SaveToEEProm();
+  }
 HStat.ReadFromEEProm();
 Log.Verbose("\nStatus:");Log.Verbose("\n");
 Log.Verbose("size=");Log.Verbose(String(sizeof(HStat.Status),DEC));Log.Verbose("\n");
 Log.Verbose("mode=");Log.Verbose(String(HStat.Status.Mode));Log.Verbose("\n");
 Log.Verbose("Loglev=");Log.Verbose(String(HStat.Status.Uartlev));Log.Verbose("\n");
 Log.Verbose("ClockPeriod=");Log.Verbose(String(HStat.Status.ClockPer));Log.Verbose("\n");
-  HS.EEPromDefault();
-  Log.Info(HS.SetEventDay(dowTuesday,Event0,0,evEN,swON,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventDay(dowTuesday,Event1,1,evEN,swOFF,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventDay(dowTuesday,Event2,2,evEN,swON,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventDay(dowTuesday,Event3,3,evEN,swOFF,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventDay(dowTuesday,Event4,4,evEN,swON,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventDay(dowTuesday,Event5,5,evEN,swOFF,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventOnce(0,HS.SetTimeEvent(0,1,0,26,10,2017),evEN,swON,sw1));Log.Info("\n");
-  Log.Info(HS.SetEventOnce(1,HS.SetTimeEvent(0,1,5,26,10,2017),evEN,swOFF,sw1));Log.Info("\n");
-  setTime(23,59,50,16,10,17); // set time
-   //time_t now_t=now();
-//   time_t now_t;
-//   now_t=HS.SetTimeOfDay(3,10,10);
-//   Serial.println(HS.TimeToStr(now_t));
-//   Serial.print("now in quarter=");
-//   Serial.println(TimeToQuart(now_t));
-   Alarm.alarmRepeat(0,0,0, UpdateSched);  // update schedule at midnight
-   
+setTime(23,59,50,16,10,17); // set time
+Alarm.alarmRepeat(0,0,0, UpdateSched);  // update schedule at midnight   
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  //digitalClockDisplay();
-
   if (Serial.available() > 0) 
    {
       //Log.Info("\nReceived a command\n");
@@ -116,8 +56,7 @@ void loop() {
       Log.Error(CP.errMsg);
     }
     else
-    {
-      
+    {     
       ExCommand(CP.Cmd);
     }
    }
@@ -129,7 +68,7 @@ void loop() {
     loop_c=1;
    }
 }//end loop
-/*
+/***************************************
  * Commands
  */
 void ExCommand(uint8_t cmd)
@@ -194,13 +133,41 @@ void ExCommand(uint8_t cmd)
       Log.Info("#4:OK\n");   
     }
     break;
+    case 5: //Change Status Parameters
+    //format: #5,Uartlev,ZBlev,Mode,ClockPer,TimeAdj.
+    if (CP.Nfield==6)
+    {
+      Log.Debug("\nCommand Change Status Parameters: ");
+      Log_en _Uartlev=CP.Field[1]; Log.Verbose(String(_Uartlev));Log.Verbose(",");
+      Log_en _ZBlev=CP.Field[2]; Log.Verbose(String(_ZBlev));Log.Verbose(",");
+      Mode_en _Mode=CP.Field[3]; Log.Verbose(String(_Mode));Log.Verbose(",");
+      uint8_t _ClockPer=CP.Field[4]; Log.Verbose(String(_ClockPer));Log.Verbose(","); 
+      int _TimeAdj=CP.Field[5]; Log.Verbose(String(_TimeAdj));Log.Verbose(",");
+      HStat.ChangePar(_Uartlev,_ZBlev,_Mode,_ClockPer,_TimeAdj);      
+      Log.Info("#5:OK\n");   
+    }
+    break;
+    case 10: //Default Param
+    //format: #10,mempart.     (mema part=0-->all)
+    if (CP.Nfield==2)
+    {
+      Log.Debug("\nCommand EEPROM Default Param");
+      if(CP.Field[1]==0){
+          HS.ClearEEProm();
+          HS.EEPromDefault();
+          StatusCs S=StatusCs();
+          S.SaveToEEProm();    
+      }   
+      Log.Info("\n#10:OK\n");
+    }
+    break;
     default:
      Log.Error("\n#Command Unknown\n");
   }
   return;
 }
-/*
- * Functions
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * Allarms
  */
  void Event0R() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
@@ -390,7 +357,6 @@ void UpdateSched()
 {
   Log.Info("update Schedule\n");
   int dow=weekday()-1;
-//Serial.print(dow); 
   HS.RdEEPROMday(dow);
     if (HS.Sched.WeekSched[dow].Event[Event0].EventCtrl.isEnabled==evEN)
     {
@@ -434,22 +400,6 @@ void UpdateSched()
       Log.Info(HS.EventToStrShort(HS.Sched.WeekSched[dow].Event[Event5]));
       Log.Info("\n");
     }
-//    HS.RdEEPROMevent(0);
-//    if (HS.Sched.EventFuture[0].EventCtrl.isEnabled==evEN)
-//    {
-//      idse0=Alarm.triggerOnce(HS.Sched.EventFuture[0].TimeEv, EventOnce0);
-//      Log.Info("idse0: ");
-//      Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[0]));
-//      Log.Info("\n");
-//    }
-//    HS.RdEEPROMevent(1);
-//    if (HS.Sched.EventFuture[1].EventCtrl.isEnabled==evEN)
-//    {
-//      idse1=Alarm.triggerOnce(HS.Sched.EventFuture[1].TimeEv, EventOnce1);
-//      Log.Info("idse1: ");
-//      Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[1]));
-//      Log.Info("\n");
-//    }
       return;
 }
 
@@ -480,7 +430,6 @@ void TurnON()
 
 void TurnOFF()
 {
-
   Log.Info("\nHeater OFF\n");
 }
 void digitalClockDisplay() {

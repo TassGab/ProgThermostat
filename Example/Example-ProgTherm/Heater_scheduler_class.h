@@ -45,6 +45,7 @@ typedef struct
 {
   DaySchedule_sc WeekSched[7]; //Array of DaySchedule_sc representing the week schedule
   EventFuture_sc EventFuture[nEventFuture]; //Event once in a certain time
+  uint8_t EEPROMempty;
 } Sched_sc;
 class HeaterSchedulerCs
 {
@@ -65,14 +66,15 @@ class HeaterSchedulerCs
     void WrEEPROMday(DaySchedule_sc);
     void WrEEPROMevent(uint8_t,EventFuture_sc);
     void EEPromDefault();
-    
+    uint8_t GetEEPromEmpty();
+    void ClearEEProm();
   private:
     int GetEEoffAddress=20;
     int GetEEdaystructsize=0;
     int GetEEeventstructsize=0;
     
-    void DayDeepCp(DaySchedule_sc, DaySchedule_sc); 
-    void EvDeepCp(EventFuture_sc,EventFuture_sc);
+    DaySchedule_sc  DayDeepCp(DaySchedule_sc); 
+    EventFuture_sc  EvDeepCp(EventFuture_sc);
     
 };
 #endif
