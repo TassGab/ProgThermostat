@@ -20,11 +20,14 @@ HeaterSchedulerCs HS=HeaterSchedulerCs(); //class instance
 CmdParserClass CP=CmdParserClass();
 int loop_c=1;
 String usbCommand="";
+int SwHeaters=5;
 //
 void setup() {
   // put your setup code here, to run once:
 Serial.begin(38400);
 
+pinMode(SwHeaters,OUTPUT);
+digitalWrite(SwHeaters,LOW);
 //HS.ClearEEProm();
 if(HS.GetEEPromEmpty()==0) 
   {
@@ -33,6 +36,7 @@ if(HS.GetEEPromEmpty()==0)
     HStat.SaveToEEProm();
   }
 HStat.ReadFromEEProm();
+chibiInit();
 Log.Verbose("\nStatus:");Log.Verbose("\n");
 Log.Verbose("size=");Log.Verbose(String(sizeof(HStat.Status),DEC));Log.Verbose("\n");
 Log.Verbose("mode=");Log.Verbose(String(HStat.Status.Mode));Log.Verbose("\n");
@@ -46,8 +50,8 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (Serial.available() > 0) 
    {
-      //Log.Info("\nReceived a command\n");
-      Serial.println("\nReceived a command\n");
+      Log.Info("\nReceived a command\n");
+      //Serial.println("\nReceived a command\n");
       usbCommand+=Serial.readString();
       CP.Parse(usbCommand);
       usbCommand="";
@@ -60,7 +64,19 @@ void loop() {
       ExCommand(CP.Cmd);
     }
    }
-   
+  if (chibiDataRcvd() == true)
+  { 
+    int len;
+    byte buf[CHB_MAX_PAYLOAD];  // this is where we store the received data    
+    // retrieve the data and the signal strength
+    len = chibiGetData(buf);
+    // discard the data if the length is 0. that means its a duplicate packet
+    if (len > 0)
+    {
+         Log.Info("\nReceived a command\n");
+         CP.Parse(String((char *)buf));
+    }
+  }
    Alarm.delay(1000); // wait one second between clock display
   if(loop_c++==HStat.Status.ClockPer)
    {

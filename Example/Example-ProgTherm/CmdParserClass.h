@@ -8,7 +8,7 @@
 //#include <chibi.h>
 #define MAX_CMD_F 10
 #define MAX_ERR_MSG 20
-#include <Logging_class.h>
+#include "Logging_class.h"
 class CmdParserClass
 {
  public:
