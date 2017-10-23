@@ -69,7 +69,7 @@ class HeaterSchedulerCs
     uint8_t GetEEPromEmpty();
     void ClearEEProm();
   private:
-    int GetEEoffAddress=20;
+    int GetEEoffAddress=30;
     int GetEEdaystructsize=0;
     int GetEEeventstructsize=0;
     

@@ -14,7 +14,7 @@ return;
 void StatusCs::NextState(Mode_en nextMode)
 {
   Status.LastState=Status.Mode;
-  Status.Mode=nextMode;
+  Status.Mode=nextMode;  
   return;
 }
 void StatusCs::BackLastState()

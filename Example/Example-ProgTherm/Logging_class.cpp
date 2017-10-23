@@ -76,8 +76,10 @@ void LoggingCs::Print(String s)
   if(Log.AutoCR) Serial.println();
   
 }
+
 void LoggingCs::SendZB(String s)
 {
+  #ifdef zigbee
   byte data[CHB_MAX_PAYLOAD];
   unsigned int len;
   if(Log.AutoCR) s+='\n';
@@ -91,7 +93,9 @@ void LoggingCs::SendZB(String s)
   len=byte(s.length());
   s.toCharArray(data,len);
   chibiTx(BROADCAST_ADDR, (byte *)data,len);
+  #endif
 }
+
 //CRC-8 - based on the CRC8 formulas by Dallas/Maxim
 //code released under the therms of the GNU GPL 3.0 license
 byte LoggingCs::CRC8(const byte *data, byte len) {
