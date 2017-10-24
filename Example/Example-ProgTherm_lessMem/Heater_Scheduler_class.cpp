@@ -1,6 +1,6 @@
 #include "Heater_scheduler_class.h"
 #include <Arduino.h>
-//#define debug
+#define debug
 HeaterSchedulerCs::HeaterSchedulerCs(void)
 {
   //GetEEoffAddres=0;
@@ -55,6 +55,7 @@ time_t HeaterSchedulerCs::QuartToTime(TimeQuarter_sc qt)
     tt = qt * SECS_PER_MIN * 15 + 5;
 #endif
   }
+  Log.Verbose("\ntime=");Log.Verbose(String(tt));Log.Verbose("\n");
   return tt;
 }
 String HeaterSchedulerCs::EventToStrShort(EventType_sc Ev)
@@ -128,6 +129,7 @@ time_t HeaterSchedulerCs::SetTimeOfDay(uint8_t hh, uint8_t mm, uint8_t ss)
   tt.Hour = hh;
   tt.Minute = mm;
   tt.Second = ss;
+  //Log.Verbose("\ntime of day=");Log.Verbose(String(tt));Log.Verbose("\n");
   return makeTime(tt);
 }
 time_t HeaterSchedulerCs::SetTimeEvent(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t dd, uint8_t mo, uint8_t yy)
@@ -139,6 +141,7 @@ time_t HeaterSchedulerCs::SetTimeEvent(uint8_t hh, uint8_t mm, uint8_t ss, uint8
   tt.Day = dd;
   tt.Month = mo;
   tt.Year = CalendarYrToTm(yy);
+  //Log.Verbose("\ntime=");Log.Verbose(String(tt));Log.Verbose("\n");
   return makeTime(tt);
 }
 void HeaterSchedulerCs::RdEEPROMday(timeDayOfWeek_t dow, uint8_t _evnum)
