@@ -1,6 +1,6 @@
 #include "Logging_class.h"
 //#define debug
-//#define zigbee
+
 LoggingCs::LoggingCs()
 {
   LogLevel=ZBLogLevel=_Verbose;
@@ -77,7 +77,16 @@ void LoggingCs::Print(String s)
   if(Log.AutoCR) Serial.println();
   
 }
-
+String LoggingCs::LevToStr(Log_en lev)
+{
+  String s="";
+  if(lev==_Verbose) s="Verbose";
+  else if(lev==_Debug) s="Debug";
+  else if(lev==_Info) s="Info";
+  else if(lev==_Error) s="Error";
+  else s="Not Set";
+  return s;
+}
 void LoggingCs::SendZB(String s)
 {
   #ifdef zigbee

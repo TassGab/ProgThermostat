@@ -29,6 +29,7 @@ class StatusCs
   void ChangePar(Log_en ,Log_en ,Mode_en ,uint8_t , int );
   private:  
   int GetEEoffAddress=0;
-  
+  void StatPrint();
+  String ModeToStr(Mode_en);  
 };
 #endif

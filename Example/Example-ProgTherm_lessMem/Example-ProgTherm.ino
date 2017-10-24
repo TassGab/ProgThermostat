@@ -13,7 +13,7 @@
 #include "ProgThermClass.h"
 #include <TimeAlarms.h>
 
-AlarmId id0, id1,id2, id3, id4, id5, idse0, idse1;
+AlarmId id0, id1, id2, id3, id4, id5, idse0, idse1;
 //EventNum_sc ev; //Global var for event of the day
 StatusCs HStat = StatusCs(); //Declare the status class
 HeaterSchedulerCs HS = HeaterSchedulerCs(); //class instance
@@ -28,7 +28,7 @@ void setup() {
 
   pinMode(SwHeaters, OUTPUT);
   digitalWrite(SwHeaters, LOW);
- // HS.ClearEEProm();
+  //HS.ClearEEProm();
   if (HS.GetEEPromEmpty() == 0)
   {
     Log.Debug("\nEEPROM write default...\n");
@@ -45,7 +45,10 @@ void setup() {
   Log.Verbose("Loglev="); Log.Verbose(String(HStat.Status.Uartlev)); Log.Verbose("\n");
   Log.Verbose("ClockPeriod="); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose("\n");
   setTime(23, 59, 50, 16, 10, 17); // set time
-  Alarm.alarmRepeat(0, 0, 0, UpdateSched); // update schedule at midnight
+  //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
+  if(HStat.Status.Mode==_Daily) UpdateDailySched();
+  else if(HStat.Status.Mode==_Once) UpdateSchedOnce();
+  
 }
 
 void loop() {
@@ -59,7 +62,7 @@ void loop() {
     usbCommand = "";
     if (CP.erFlag)
     {
-      Log.Error(CP.errMsg);
+      Log.Error("\nCommand Error\n");
     }
     else
     {
@@ -127,7 +130,7 @@ void ExCommand(uint8_t cmd)
         Log.Info("\n#2:");
         Log.Info(HS.SetEventDay(_dow, _evnum, _Tqua, _en, _onoff, _swn)); Log.Info("\n");
         Log.Info("#2:OK\n");
-        //HS.WrEEPROMday(HS.Sched.WeekSched[_dow-1]);
+        HS.WrEEPROMdayEv(HS.Sched.Daily);
       }
       break;
     case 3: //Save eventDay
@@ -136,7 +139,7 @@ void ExCommand(uint8_t cmd)
       {
         Log.Debug("\nCommand Store DayEvents ");
         uint8_t _dow = CP.Field[1]; Log.Verbose(String(_dow)); Log.Verbose("\n");
-        HS.WrEEPROMday(HS.Sched.Daily);
+        HS.WrEEPROMdayEv(HS.Sched.Daily);
         Log.Info("\n#3:OK\n");
       }
       break;
@@ -147,9 +150,9 @@ void ExCommand(uint8_t cmd)
         Log.Debug("\nCommand READ DayEvent: ");
         uint8_t _dow = CP.Field[1]; Log.Verbose(String(_dow)); Log.Verbose(",");
         uint8_t _evnum = CP.Field[2]; Log.Verbose(String(_evnum)); Log.Verbose("\n");
-        HS.RdEEPROMday(_dow);
+        HS.RdEEPROMday(_dow, _evnum);
         Log.Info("\n#4:");
-        Log.Info(HS.EventToStrLong(HS.Sched.Daily.Event[_evnum])); Log.Info("\n");
+        Log.Info(HS.EventToStrLong(HS.Sched.Daily.Event)); Log.Info("\n");
         Log.Info("#4:OK\n");
       }
       break;
@@ -167,38 +170,38 @@ void ExCommand(uint8_t cmd)
         Log.Info("#5:OK\n");
       }
       break;
-      case 6: //Change Mode
+    case 6: //Change Mode
       //format: #6,Mode.
       if (CP.Nfield == 2)
       {
         Log.Debug("\nCommand Change Mode: ");
         Mode_en _Mode = CP.Field[1]; Log.Verbose(String(_Mode)); Log.Verbose(",");
-        if(_Mode>0 and _Mode<4)
+        if (_Mode > 0 and _Mode < 4)
         {
           HStat.NextState(_Mode);
-          if (_Mode==_Daily) UpdateSched();
-          else if (_Mode==_Once) UpdateSchedOnce();
-          else if (_Mode==_Out) UpdateSchedOnce();
+          //          if (_Mode == _Daily) UpdateSched();
+          //          else if (_Mode == _Once) UpdateSchedOnce();
+          //          else if (_Mode == _Out) UpdateSchedOnce();
         }
         Log.Info("#6:OK\n");
       }
       break;
-      case 8: //set alarm Once
+    case 8: //set alarm Once
       //format: #8,quarter,gg,mo,yy,en,on/off.
       if (CP.Nfield == 7)
       {
         Log.Debug("\nCommand set Event Once: ");
         uint8_t _Tqua = CP.Field[1]; Log.Verbose(String(_Tqua)); Log.Verbose(",");
-        uint8_t _Tgg= CP.Field[2]; Log.Verbose(String(_Tgg)); Log.Verbose(",");
+        uint8_t _Tgg = CP.Field[2]; Log.Verbose(String(_Tgg)); Log.Verbose(",");
         uint8_t _Tmo = CP.Field[3]; Log.Verbose(String(_Tmo)); Log.Verbose(",");
         uint8_t _Tyy = CP.Field[1]; Log.Verbose(String(_Tyy)); Log.Verbose(",");
         uint8_t _en = CP.Field[2]; Log.Verbose(String(_en)); Log.Verbose(",");
         uint8_t _onoff = CP.Field[3]; Log.Verbose(String(_onoff)); Log.Verbose(",");
         uint8_t _swn = CP.Field[4]; Log.Verbose(String(_swn)); Log.Verbose("\n");
         Log.Info("\n#8:");
-        Log.Info(HS.SetEventOnce(0,(HS.SetTimeEvent(0,0,0,_Tgg,_Tmo,_Tyy)+_Tqua*900), _en, _onoff, _swn)); Log.Info("\n");
+        Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + _Tqua * 900), _en, _onoff, _swn)); Log.Info("\n");
         Log.Info("#8:OK\n");
-        HS. WrEEPROMevent(0,HS.Sched.EventFuture);
+        HS. WrEEPROMevent(0, HS.Sched.EventFuture);
       }
       break;
     case 10: //Default Param
@@ -223,41 +226,35 @@ void ExCommand(uint8_t cmd)
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Allarms
 */
-void Event0R() {
-  //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 0;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(ev,DEC);
+void UpdateDailySched()
+{
+  Log.Info("Update Schedule\n");
   int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
-  if (HStat.Status.Mode == _Daily)
-  {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
-    {
-      TurnON();
-    }
-    else
-    {
-      TurnOFF();
-    }
-  }
   Alarm.free(id0);
   // optional, but safest to "forget" the ID after memory recycled
   id0 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
+  if (!HS.GetNextDayEv(dow))
+  {
+    id0 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event.EvTimeQ), Event0R);
+    Log.Info("\n Next event: ");
+    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event));
+    Log.Info("\n");
+  }
+  else
+  {
+    id0 = Alarm.alarmRepeat(0, 0, 0, UpdateDailySched); // update schedule at midnight
+    Log.Info("\nNext Event is midnight for just schedule update\n");
+  }
   return;
 }
-void Event1R() {
+
+void Event0R() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 1;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(ev,DEC);
-  int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
+  //HStat.Status.EvCalled = 0;
+  Log.Info("Triggered Alarm: dow"); Log.Info(String(HS.Sched.Daily.dow)); Log.Info(", ev num=");Log.Info(String(HS.Sched.Daily.EvNum)); Log.Info("\n");
   if (HStat.Status.Mode == _Daily)
   {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
+    if (HS.Sched.Daily.Event.EventCtrl.swTurn == swON)
     {
       TurnON();
     }
@@ -266,113 +263,10 @@ void Event1R() {
       TurnOFF();
     }
   }
-  Alarm.free(id1);
-  // optional, but safest to "forget" the ID after memory recycled
-  id1 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
+  UpdateDailySched();
   return;
 }
-void Event2R() {
-  //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 2;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(HStat.Status.EvCalled,DEC);
-  int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
-  if (HStat.Status.Mode == _Daily)
-  {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
-    {
-      TurnON();
-    }
-    else
-    {
-      TurnOFF();
-    }
-  }
-  Alarm.free(id2);
-  // optional, but safest to "forget" the ID after memory recycled
-  id2 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
-  return;
-}
-void Event3R() {
-  //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 3;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(HStat.Status.EvCalled,DEC);
-  int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
-  if (HStat.Status.Mode == _Daily)
-  {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
-    {
-      TurnON();
-    }
-    else
-    {
-      TurnOFF();
-    }
-  }
-  Alarm.free(id3);
-  // optional, but safest to "forget" the ID after memory recycled
-  id3 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
-  return;
-}
-void Event4R() {
-  //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 4;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(ev,DEC);
-  int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
-  if (HStat.Status.Mode == _Daily)
-  {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
-    {
-      TurnON();
-    }
-    else
-    {
-      TurnOFF();
-    }
-  }
-  Alarm.free(id4);
-  // optional, but safest to "forget" the ID after memory recycled
-  id4 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
-  return;
-}
-void Event5R() {
-  //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 5;
-  Log.Info("Triggered Alarm="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-  //Serial.println(ev,DEC);
-  int dow = weekday() - 1;
-  // use Alarm.free() to disable a timer and recycle its memory.
-  if (HStat.Status.Mode == _Daily)
-  {
-    if (HS.Sched.Daily.Event[HStat.Status.EvCalled].EventCtrl.swTurn == swON)
-    {
-      TurnON();
-    }
-    else
-    {
-      TurnOFF();
-    }
-  }
-  Alarm.free(id5);
-  // optional, but safest to "forget" the ID after memory recycled
-  id5 = dtINVALID_ALARM_ID;
-  // you can also use Alarm.disable() to turn the timer off, but keep
-  // it in memory, to turn back on later with Alarm.enable().
-  return;
-}
+
 void EventOnce0() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
   HStat.Status.EvCalled = 0;
@@ -398,80 +292,7 @@ void EventOnce0() {
   // it in memory, to turn back on later with Alarm.enable().
   return;
 }
-//void EventOnce1() {
-//  //AlarmId id=  Alarm.getTriggeredAlarmId();
-//  HStat.Status.EvCalled = 1;
-//  Log.Info("Triggered Alarm Single Event="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
-//  //Serial.println(ev,DEC);
-//
-//  // use Alarm.free() to disable a timer and recycle its memory.
-//  if (HStat.Status.Mode == _Out)
-//  {
-//    if (HS.Sched.EventFuture.EventCtrl.swTurn == swON)
-//    {
-//      TurnON();
-//    }
-//    else
-//    {
-//      TurnOFF();
-//    }
-//  }
-//  Alarm.free(idse1);
-//  // optional, but safest to "forget" the ID after memory recycled
-//  idse1 = dtINVALID_ALARM_ID;
-//  // you can also use Alarm.disable() to turn the timer off, but keep
-//  // it in memory, to turn back on later with Alarm.enable().
-//  return;
-//}
-void UpdateSched()
-{
-  Log.Info("update Schedule\n");
-  int dow = weekday() - 1;
-  HS.RdEEPROMday(dow);
-  if (HS.Sched.Daily.Event[Event0].EventCtrl.isEnabled == evEN)
-  {
-    id0 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event0].EvTimeQ), Event0R);
-    Log.Info("id0: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event0]));
-    Log.Info("\n");
-  }
-  if (HS.Sched.Daily.Event[Event1].EventCtrl.isEnabled == evEN)
-  {
-    id1 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event1].EvTimeQ), Event1R);
-    Log.Info("id1: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event1]));
-    Log.Info("\n");
-  }
-  if (HS.Sched.Daily.Event[Event2].EventCtrl.isEnabled == evEN)
-  {
-    id2 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event2].EvTimeQ), Event2R);
-    Log.Info("id2: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event2]));
-    Log.Info("\n");
-  }
-  if (HS.Sched.Daily.Event[Event3].EventCtrl.isEnabled == evEN)
-  {
-    id3 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event3].EvTimeQ), Event3R);
-    Log.Info("id3: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event3]));
-    Log.Info("\n");
-  }
-  if (HS.Sched.Daily.Event[Event4].EventCtrl.isEnabled == evEN)
-  {
-    id4 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event4].EvTimeQ), Event4R);
-    Log.Info("id4: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event4]));
-    Log.Info("\n");
-  }
-  if (HS.Sched.Daily.Event[Event5].EventCtrl.isEnabled == evEN)
-  {
-    id5 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event[Event5].EvTimeQ), Event5R);
-    Log.Info("id5: ");
-    Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event[Event5]));
-    Log.Info("\n");
-  }
-  return;
-}
+
 
 void UpdateSchedOnce()
 {
@@ -483,14 +304,6 @@ void UpdateSchedOnce()
     Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture));
     Log.Info("\n");
   }
-//  HS.RdEEPROMevent(1);
-//  if (HS.Sched.EventFuture[1].EventCtrl.isEnabled == evEN)
-//  {
-//    idse1 = Alarm.timerOnce(HS.Sched.EventFuture[1].TimeEv, EventOnce1);
-//    Log.Info("idse1: ");
-//    Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture[1]));
-//    Log.Info("\n");
-//  }
 }
 //
 void TurnON()

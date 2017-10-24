@@ -33,7 +33,8 @@ typedef struct
 typedef struct
 {
   timeDayOfWeek_t dow; // day of the week
-  EventType_sc Event[nEventPerDay]; //array of events per day
+  uint8_t EvNum;  //event in the day
+  EventType_sc Event; //array of events per day
 } DaySchedule_sc;
 typedef struct
 {
@@ -61,13 +62,14 @@ class HeaterSchedulerCs
     String EventToStrShort(EventType_sc);
     String EventOnceToStrShort(EventFuture_sc); 
     String EventToStrLong(EventType_sc);
-    void RdEEPROMday(timeDayOfWeek_t);
+    void RdEEPROMday(timeDayOfWeek_t, uint8_t);
     void RdEEPROMevent(uint8_t);
-    void WrEEPROMday(DaySchedule_sc);
+    void WrEEPROMdayEv(DaySchedule_sc);
     void WrEEPROMevent(uint8_t,EventFuture_sc);
     void EEPromDefault();
     uint8_t GetEEPromEmpty();
     void ClearEEProm();
+    bool GetNextDayEv(timeDayOfWeek_t);
   private:
     int GetEEoffAddress=30;
     int GetEEdaystructsize=0;

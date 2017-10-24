@@ -10,7 +10,7 @@
 #define Ff1 1
 void CmdParserClass::Parse(String inCommand){
   //Crc16 crc;
-   WriteErrMsg("");
+//   WriteErrMsg("");
    Cmd=-1;
    erFlag=false;
    Nfield=-1;
@@ -18,17 +18,15 @@ void CmdParserClass::Parse(String inCommand){
     {
        //unsigned short value;
        char data[100];
-       Log.Verbose("\nCMD =");Log.Verbose(String(inCommand));
+       Log.Debug("\nCMD =");Log.Debug(String(inCommand));
        Nfield=(uint8_t)stringParser(inCommand);
        Cmd=(uint8_t)Field[Fcmd];  
-       //  Serial.print("Cmd=");Serial.println(Cmd);
-       Log.Verbose("\nerrMsg="); Log.Verbose(String(errMsg));
        Log.Verbose("\nNfield="); Log.Verbose(String(Nfield,DEC));Log.Verbose("\n");
     }  
     else
     {
       erFlag=true;
-      WriteErrMsg("Sintax error");
+     Log.Error("\nCmd Sintax error \n");
     }
     //inCommand="";
     return;
@@ -54,7 +52,7 @@ uint8_t CmdParserClass::stringParser(String s)
       if (s[is] == ',' ) 
       {
        Field[ncount]=inString.toInt();
-      Log.Verbose("\n>");Log.Verbose(String(Field[ncount]));
+       //Log.Verbose("\n>");Log.Verbose(String(Field[ncount]));
        ncount++;
        // clear the string for new input:
        inString = "";
@@ -64,7 +62,7 @@ uint8_t CmdParserClass::stringParser(String s)
        Field[ncount]=inString.toInt();
        inString = "";
        erFlag=false;
-       WriteErrMsg("No error");
+       Log.Debug("Cmd end found");
        Log.Verbose("\n>");Log.Verbose(String(Field[ncount]));
       //Serial.print("\r\nCRC=");Serial.println(Field[ncount]);
      // Serial.print('>');Serial.println(Field[ncount]);
@@ -74,19 +72,12 @@ uint8_t CmdParserClass::stringParser(String s)
     else
     {
       erFlag=true;
-      WriteErrMsg("N field exceeds "+MAX_CMD_F);
-
+      Log.Error("\nN field exceeds ");Log.Error(String(MAX_CMD_F));Log.Error("\n");
     }
   }//end for
   inString = "";
   return ncount;
 }
-void CmdParserClass::WriteErrMsg(String s)
-{
-  int l=s.length();
-  Log.Verbose("Error:");Log.Verbose(s);Log.Verbose("\tlength=");Log.Verbose(String(l,DEC));Log.Verbose("\n");
-  if(l<=MAX_ERR_MSG) s.toCharArray(errMsg,l);
-  return;
-}
+
 
 

@@ -1,6 +1,7 @@
 #ifndef Logging_h
 #define Logging_h
 #include <Arduino.h>
+//#define zigbee
 #ifdef zigbee
  #include <chibi.h>
 #endif
@@ -18,6 +19,7 @@ class LoggingCs
    void Debug(String);
    void Info(String);
    void Error(String);
+   String LevToStr(Log_en);
   private:
    void Print(String);
    void SendZB(String);
