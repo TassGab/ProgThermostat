@@ -1,6 +1,6 @@
 #include "Heater_scheduler_class.h"
 #include <Arduino.h>
-#define debug
+//#define debug
 HeaterSchedulerCs::HeaterSchedulerCs(void)
 {
   //GetEEoffAddres=0;
@@ -233,40 +233,40 @@ void HeaterSchedulerCs::EEPromDefault()
     WrEEPROMdayEv(Sched.Daily);
 #else
     Sched.Daily.EvNum=0;
-    Sched.Daily.Event[0].EvTimeQ = 26; //6:30
-    Sched.Daily.Event[0].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[0].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[0].EventCtrl.swTurn = swON;
+    Sched.Daily.Event.EvTimeQ = 26; //6:30
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
     Sched.Daily.EvNum=1;
-    Sched.Daily.Event[1].EvTimeQ = 32; //8:00
-    Sched.Daily.Event[1].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[1].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[1].EventCtrl.swTurn = swOFF;
+    Sched.Daily.Event.EvTimeQ = 32; //8:00
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swOFF;
     WrEEPROMdayEv(Sched.Daily);
         Sched.Daily.EvNum=2;
-    Sched.Daily.Event[2].EvTimeQ = 48; //12:00
-    Sched.Daily.Event[2].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[2].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[2].EventCtrl.swTurn = swON;
+    Sched.Daily.Event.EvTimeQ = 48; //12:00
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
         Sched.Daily.EvNum=3;
-    Sched.Daily.Event[3].EvTimeQ = 56; //14:00
-    Sched.Daily.Event[3].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[3].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[3].EventCtrl.swTurn = swOFF;
+    Sched.Daily.Event.EvTimeQ = 56; //14:00
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swOFF;
     WrEEPROMdayEv(Sched.Daily);
         Sched.Daily.EvNum=4;
-    Sched.Daily.Event[4].EvTimeQ = 64; //16:00
-    Sched.Daily.Event[4].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[4].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[4].EventCtrl.swTurn = swON;
+    Sched.Daily.Event.EvTimeQ = 64; //16:00
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
         Sched.Daily.EvNum=5;
-    Sched.Daily.Event[5].EvTimeQ = 100; //22:30
-    Sched.Daily.Event[5].EventCtrl.isEnabled = evEN;
-    Sched.Daily.Event[5].EventCtrl.nSwitch = sw1;
-    Sched.Daily.Event[5].EventCtrl.swTurn = swOFF;
+    Sched.Daily.Event.EvTimeQ = 100; //22:30
+    Sched.Daily.Event.EventCtrl.isEnabled = evEN;
+    Sched.Daily.Event.EventCtrl.nSwitch = sw1;
+    Sched.Daily.Event.EventCtrl.swTurn = swOFF;
     WrEEPROMdayEv(Sched.Daily);
 #endif
   }
