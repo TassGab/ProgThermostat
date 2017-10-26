@@ -1,6 +1,6 @@
 #include "Heater_scheduler_class.h"
 #include <Arduino.h>
-#define debug
+//#define debug
 HeaterSchedulerCs::HeaterSchedulerCs(void)
 {
   //GetEEoffAddres=0;
@@ -155,7 +155,7 @@ void HeaterSchedulerCs::RdEEPROMday(timeDayOfWeek_t dow, uint8_t _evnum)
   //for (uint8_t i=0; i< nEventPerDay ;i++){
   //Log.Verbose(SetEventDay(dow,i,daysc.Event[i].EvTimeQ,daysc.Event[i].EventCtrl.isEnabled,daysc.Event[i].EventCtrl.nSwitch,daysc.Event[i].EventCtrl.swTurn));Log.Verbose("\n");
   Log.Debug("EE Read: "); Log.Debug(EventToStrShort(daysc.Event)); Log.Debug("\n");
-  Log.Verbose("Sched Read: "); Log.Verbose(EventToStrShort(Sched.Daily.Event)); Log.Verbose("\n");
+  Log.Verbose(F("Sched Read: ")); Log.Verbose(EventToStrShort(Sched.Daily.Event)); Log.Verbose("\n");
 }
 void HeaterSchedulerCs::RdEEPROMevent(uint8_t _evnum)
 {
@@ -309,11 +309,11 @@ void HeaterSchedulerCs::ClearEEProm()
 bool HeaterSchedulerCs::GetNextDayEv(timeDayOfWeek_t _dow)
 {
   time_t _now = now();
-  Log.Verbose("\nTime in Q=");Log.Verbose(String(TimeToQuart(_now)));Log.Verbose("\n");
+  Log.Verbose("\nTime in sec=");Log.Verbose(String(elapsedSecsToday(_now)));Log.Verbose("\n");
   for (int _ev = 0; _ev < nEventPerDay; _ev++)
   {
     RdEEPROMday(_dow, _ev);
-    if ((TimeToQuart(_now) <= Sched.Daily.Event.EvTimeQ) && (Sched.Daily.Event.EventCtrl.isEnabled))
+    if ((elapsedSecsToday(_now) <= Sched.Daily.Event.EvTimeQ*15*SECS_PER_MIN) && (Sched.Daily.Event.EventCtrl.isEnabled))
     {
       Log.Debug("\nEvent found in today ="); Log.Debug(String(_ev)); Log.Debug("\n");
       return false;

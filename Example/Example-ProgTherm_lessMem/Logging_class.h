@@ -16,12 +16,14 @@ class LoggingCs
    bool ZBen;
    bool AutoCR;
    void Verbose(String);
+//   void Verbose(char[]);
    void Debug(String);
    void Info(String);
    void Error(String);
    String LevToStr(Log_en);
   private:
    void Print(String);
+//   void Print(char[]);
    void SendZB(String);
    byte CRC8(const byte *, byte);    
 };

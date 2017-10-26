@@ -23,6 +23,22 @@ void LoggingCs::Verbose(String s)
   #endif
   }
 }
+//void LoggingCs::Verbose(char s[])
+//{
+//  if(_Verbose>=Log.LogLevel)
+//  {
+//    Print(s);
+//  }
+//  if((_Verbose>=Log.ZBLogLevel)&(Log.ZBen))
+//  {
+//  SendZB(s);
+//  #ifdef debug
+//    Serial.print("ZB:");
+//    Serial.print(s);
+//    if(Log.AutoCR) Serial.println();
+//  #endif
+//  }
+//}
 void LoggingCs::Debug(String s)
 {
   if(_Debug>=Log.LogLevel)
@@ -77,6 +93,12 @@ void LoggingCs::Print(String s)
   if(Log.AutoCR) Serial.println();
   
 }
+//void LoggingCs::Print(char s[])
+//{
+//  Serial.print(s);
+//  if(Log.AutoCR) Serial.println();  
+//}
+
 String LoggingCs::LevToStr(Log_en lev)
 {
   String s="";
@@ -93,13 +115,14 @@ void LoggingCs::SendZB(String s)
   byte data[CHB_MAX_PAYLOAD];
   unsigned int len;
   if(Log.AutoCR) s+='\n';
-  s+='\0';
+ 
   len=byte(s.length());
   s.toCharArray(data,len);
   byte value = 0;
   value=CRC8((char *)data,len);
   Log.Verbose("\nCrc:");Log.Verbose(String(value));Log.Verbose("\n");
   s+=String(value);
+  s+='\0';
   len=byte(s.length());
   s.toCharArray(data,len);
   chibiTx(BROADCAST_ADDR, (byte *)data,len);

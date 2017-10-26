@@ -251,7 +251,7 @@ void UpdateDailySched()
 void Event0R() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
   //HStat.Status.EvCalled = 0;
-  Log.Info("Triggered Alarm: dow"); Log.Info(String(HS.Sched.Daily.dow)); Log.Info(", ev num=");Log.Info(String(HS.Sched.Daily.EvNum)); Log.Info("\n");
+  Log.Info("\nTriggered Alarm: dow="); Log.Info(String(HS.Sched.Daily.dow)); Log.Info(", ev num=");Log.Info(String(HS.Sched.Daily.EvNum)); Log.Info("\n");
   if (HStat.Status.Mode == _Daily)
   {
     if (HS.Sched.Daily.Event.EventCtrl.swTurn == swON)
