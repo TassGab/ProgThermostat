@@ -46,8 +46,7 @@ void setup() {
   Log.Verbose("ClockPeriod="); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose("\n");
   setTime(23, 59, 50, 16, 10, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
-  if(HStat.Status.Mode==_Daily) UpdateDailySched();
-  else if(HStat.Status.Mode==_Once) UpdateSchedOnce();
+  UpdateSched();
   
 }
 
@@ -115,6 +114,7 @@ void ExCommand(uint8_t cmd)
         //Log.Info(HS.TimeToStr(now()));
         //Log.Info("\n");
       }
+      else Log.Error(F("\n#1:Num. of field is wrong\n"));
       break;
     case 2: //set alarm eventDay
       //format: #2,dow,evnum,quarter,en,on/off,sw1.
@@ -129,22 +129,13 @@ void ExCommand(uint8_t cmd)
         uint8_t _swn = CP.Field[6]; Log.Verbose(String(_swn)); Log.Verbose("\n");
         Log.Info("\n#2:");
         Log.Info(HS.SetEventDay(_dow, _evnum, _Tqua, _en, _onoff, _swn)); Log.Info("\n");
+        HS.WrEEPROMdayEv(HS.Sched.Daily);
         Log.Info("#2:OK\n");
-        HS.WrEEPROMdayEv(HS.Sched.Daily);
       }
+      else Log.Error(F("\n#2:Num. of field is wrong\n"));
       break;
-    case 3: //Save eventDay
-      //format: #3,dow.
-      if (CP.Nfield == 2)
-      {
-        Log.Debug("\nCommand Store DayEvents ");
-        uint8_t _dow = CP.Field[1]; Log.Verbose(String(_dow)); Log.Verbose("\n");
-        HS.WrEEPROMdayEv(HS.Sched.Daily);
-        Log.Info("\n#3:OK\n");
-      }
-      break;
-    case 4: //Read alarm eventDay
-      //format: #4,dow,evnum.
+    case 3: //Read alarm eventDay
+      //format: #3,dow,evnum.
       if (CP.Nfield == 3)
       {
         Log.Debug("\nCommand READ DayEvent: ");
@@ -155,7 +146,20 @@ void ExCommand(uint8_t cmd)
         Log.Info(HS.EventToStrLong(HS.Sched.Daily.Event)); Log.Info("\n");
         Log.Info("#4:OK\n");
       }
+      else Log.Error(F("\n#3:Num. of field is wrong\n"));
       break;
+    case 4: //Read Status
+      //format: #4.
+      Log.Debug("\nCommand Read Status");
+       if (CP.Nfield == 1)
+      {
+        HStat.StatPrint();
+        Log.Info("NextEvent at: ");Log.Info(HS.TimeToStr(Alarm.getNextTrigger()));Log.Info("\n");
+        digitalClockDisplay();
+        Log.Info("#4:OK\n");
+      }
+      else Log.Error(F("\n#4:Num. of field is wrong\n"));
+    break;
     case 5: //Change Status Parameters
       //format: #5,Uartlev,ZBlev,Mode,ClockPer,TimeAdj.
       if (CP.Nfield == 6)
@@ -169,6 +173,7 @@ void ExCommand(uint8_t cmd)
         HStat.ChangePar(_Uartlev, _ZBlev, _Mode, _ClockPer, _TimeAdj);
         Log.Info("#5:OK\n");
       }
+      else Log.Error(F("\n#5:Num. of field is wrong\n"));
       break;
     case 6: //Change Mode
       //format: #6,Mode.
@@ -176,15 +181,36 @@ void ExCommand(uint8_t cmd)
       {
         Log.Debug("\nCommand Change Mode: ");
         Mode_en _Mode = CP.Field[1]; Log.Verbose(String(_Mode)); Log.Verbose(",");
-        if (_Mode > 0 and _Mode < 4)
+        if (_Mode >= 0 and _Mode < 4)
         {
           HStat.NextState(_Mode);
-          //          if (_Mode == _Daily) UpdateSched();
-          //          else if (_Mode == _Once) UpdateSchedOnce();
-          //          else if (_Mode == _Out) UpdateSchedOnce();
+          HStat.SaveToEEProm();
+          UpdateSched();
         }
         Log.Info("#6:OK\n");
       }
+      else Log.Error(F("\n#6:Num. of field is wrong\n"));
+      break;
+    case 7: //Manual on/off
+      //format: #7,on/off.
+      if (CP.Nfield == 2)
+      {
+        Log.Debug("\nCommand Manualy Turn Heater: ");
+        HStat.NextState(_Manual); //Set manual mode
+        Heater_en _HeaterStat=CP.Field[1]; Log.Verbose(String(_HeaterStat)); Log.Verbose("\n");
+        if(_HeaterStat==_ON)
+        {
+          Log.Debug(F("ON\n"));
+          TurnON();
+        }
+        else
+        {
+          Log.Debug(F("OFF\n"));
+          TurnOFF();
+        }
+        Log.Info(F("#7:OK\n"));
+      }
+      else Log.Error(F("\n#7:Num. of field is wrong\n"));
       break;
     case 8: //set alarm Once
       //format: #8,quarter,gg,mo,yy,en,on/off.
@@ -194,21 +220,36 @@ void ExCommand(uint8_t cmd)
         uint8_t _Tqua = CP.Field[1]; Log.Verbose(String(_Tqua)); Log.Verbose(",");
         uint8_t _Tgg = CP.Field[2]; Log.Verbose(String(_Tgg)); Log.Verbose(",");
         uint8_t _Tmo = CP.Field[3]; Log.Verbose(String(_Tmo)); Log.Verbose(",");
-        uint8_t _Tyy = CP.Field[1]; Log.Verbose(String(_Tyy)); Log.Verbose(",");
-        uint8_t _en = CP.Field[2]; Log.Verbose(String(_en)); Log.Verbose(",");
-        uint8_t _onoff = CP.Field[3]; Log.Verbose(String(_onoff)); Log.Verbose(",");
-        uint8_t _swn = CP.Field[4]; Log.Verbose(String(_swn)); Log.Verbose("\n");
+        uint8_t _Tyy = CP.Field[4]; Log.Verbose(String(_Tyy)); Log.Verbose(",");
+        uint8_t _en = CP.Field[5]; Log.Verbose(String(_en)); Log.Verbose(",");
+        uint8_t _onoff = CP.Field[6]; Log.Verbose(String(_onoff)); Log.Verbose("\n");
+//        uint8_t _swn = CP.Field[7]; Log.Verbose(String(_swn)); Log.Verbose("\n");
         Log.Info("\n#8:");
-        Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + _Tqua * 900), _en, _onoff, _swn)); Log.Info("\n");
-        Log.Info("#8:OK\n");
+        Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + _Tqua * 900), _en, _onoff, sw1)); Log.Info("\n");
         HS. WrEEPROMevent(0, HS.Sched.EventFuture);
+        Log.Info("#8:OK\n");
       }
+      else Log.Error(F("\n#8:Num. of field is wrong\n"));
+      break;
+    case 9: //Out of home for some hours
+      //format: #9,nhours.
+      if (CP.Nfield == 2)
+      {
+        Log.Debug("\nCommand Out of Home hours: ");
+        uint8_t _hours=CP.Field[1]; Log.Verbose(String(_hours*SECS_PER_HOUR)); Log.Verbose("\n");
+        HStat.NextState(_Out); //Setmode out of home
+        TurnOFF();
+        id0 = Alarm.timerOnce(_hours, BackHome);
+        HStat.SaveToEEProm();
+        Log.Info("#9:OK\n");
+      }
+      else Log.Error(F("\n#9:Num. of field is wrong\n"));
       break;
     case 10: //Default Param
       //format: #10,mempart.     (mema part=0-->all)
       if (CP.Nfield == 2)
       {
-        Log.Debug("\nCommand EEPROM Default Param");
+        Log.Info("\nCommand EEPROM Default Param");
         if (CP.Field[1] == 0) {
           HS.ClearEEProm();
           HS.EEPromDefault();
@@ -217,6 +258,7 @@ void ExCommand(uint8_t cmd)
         }
         Log.Info("\n#10:OK\n");
       }
+      else Log.Error(F("\n#10:Num. of field is wrong\n"));
       break;
     default:
       Log.Error("\n#Command Unknown\n");
@@ -243,7 +285,7 @@ void UpdateDailySched()
   else
   {
     id0 = Alarm.alarmRepeat(0, 0, 0, UpdateDailySched); // update schedule at midnight
-    Log.Info("\nNext Event is midnight for just schedule update\n");
+    Log.Info("\nNext Event: Midnight\n");
   }
   return;
 }
@@ -269,8 +311,8 @@ void Event0R() {
 
 void EventOnce0() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
-  HStat.Status.EvCalled = 0;
-  Log.Info("Triggered Alarm Single Event="); Log.Info(String(HStat.Status.EvCalled)); Log.Info("\n");
+  //HStat.Status.EvCalled = 0;
+  Log.Info("\nTriggered Alarm Single Event"); Log.Info("\n");
   //Serial.println(ev,DEC);
 
   // use Alarm.free() to disable a timer and recycle its memory.
@@ -292,7 +334,15 @@ void EventOnce0() {
   // it in memory, to turn back on later with Alarm.enable().
   return;
 }
-
+void BackHome()
+{
+  Log.Info("\nTriggered Event: BackHome\n");
+  TurnON();
+  HStat.BackLastState();
+  HStat.SaveToEEProm();
+  UpdateSched();
+  return;
+}
 
 void UpdateSchedOnce()
 {
@@ -300,20 +350,32 @@ void UpdateSchedOnce()
   if (HS.Sched.EventFuture.EventCtrl.isEnabled == evEN)
   {
     idse0 = Alarm.triggerOnce(HS.Sched.EventFuture.TimeEv, EventOnce0);
-    Log.Info("idse0: ");
+    Log.Info("\nidse0: ");
     Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture));
     Log.Info("\n");
   }
 }
-//
+//-----------------------------------------
+void UpdateSched()
+{
+  if(HStat.Status.Mode==_Daily) UpdateDailySched();
+  else if(HStat.Status.Mode==_Once) UpdateSchedOnce();
+  return;
+}
 void TurnON()
 {
   Log.Info("\nHeater ON\n");
+  digitalWrite(SwHeaters, HIGH);
+  HStat.Status.HeaterStatus=_ON;
+  HStat.SaveToEEProm();
 }
 
 void TurnOFF()
 {
   Log.Info("\nHeater OFF\n");
+  digitalWrite(SwHeaters, LOW);
+  HStat.Status.HeaterStatus=_OFF;
+  HStat.SaveToEEProm();
 }
 void digitalClockDisplay() {
   // digital clock display of the time
