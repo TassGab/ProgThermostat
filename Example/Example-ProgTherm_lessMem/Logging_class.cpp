@@ -17,7 +17,7 @@ void LoggingCs::Verbose(String s)
   {
   SendZB(s);
   #ifdef debug
-    Serial.print("ZB:");
+    Serial.print(F("ZB:"));
     Serial.print(s);
     if(Log.AutoCR) Serial.println();
   #endif
@@ -33,7 +33,7 @@ void LoggingCs::Verbose(String s)
 //  {
 //  SendZB(s);
 //  #ifdef debug
-//    Serial.print("ZB:");
+//    Serial.print(F("ZB:");
 //    Serial.print(s);
 //    if(Log.AutoCR) Serial.println();
 //  #endif
@@ -49,7 +49,7 @@ void LoggingCs::Debug(String s)
   {
   SendZB(s);
   #ifdef debug
-    Serial.print("ZB:");
+    Serial.print(F("ZB:"));
     Serial.print(s);
     if(Log.AutoCR) Serial.println();
   #endif
@@ -65,7 +65,7 @@ void LoggingCs::Info(String s)
   {
    SendZB(s);
  #ifdef debug
-    Serial.print("ZB:");
+    Serial.print(F("ZB:"));
     Serial.print(s);
     if(Log.AutoCR) Serial.println();
   #endif
@@ -81,7 +81,7 @@ void LoggingCs::Error(String s)
   {
     SendZB(s);
 	#ifdef debug
-    Serial.print("ZB:");
+    Serial.print(F("ZB:"));
     Serial.print(s);
     if(Log.AutoCR) Serial.println();
   #endif
@@ -120,7 +120,7 @@ void LoggingCs::SendZB(String s)
   s.toCharArray(data,len);
   byte value = 0;
   value=CRC8((char *)data,len);
-  Log.Verbose("\nCrc:");Log.Verbose(String(value));Log.Verbose("\n");
+  Log.Verbose(F("\nCrc:"));Log.Verbose(String(value));Log.Verbose(F("\n"));
   s+=String(value);
   s+='\0';
   len=byte(s.length());

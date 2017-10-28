@@ -18,15 +18,15 @@ void CmdParserClass::Parse(String inCommand){
     {
        //unsigned short value;
        char data[100];
-       Log.Debug("\nCMD =");Log.Debug(String(inCommand));
+       Log.Debug(F("\nCMD ="));Log.Debug(String(inCommand));
        Nfield=(uint8_t)stringParser(inCommand);
        Cmd=(uint8_t)Field[Fcmd];  
-       Log.Verbose("\nNfield="); Log.Verbose(String(Nfield,DEC));Log.Verbose("\n");
+       Log.Verbose(F("\nNfield=")); Log.Verbose(String(Nfield,DEC));Log.Verbose(F("\n"));
     }  
     else
     {
       erFlag=true;
-     Log.Error("\nCmd Sintax error \n");
+     Log.Error(F("\nCmd Sintax error \n"));
     }
     //inCommand="";
     return;
@@ -62,8 +62,8 @@ uint8_t CmdParserClass::stringParser(String s)
        Field[ncount]=inString.toInt();
        inString = "";
        erFlag=false;
-       Log.Debug("Cmd end found");
-       Log.Verbose("\n>");Log.Verbose(String(Field[ncount]));
+       Log.Debug(F("Cmd end found"));
+       Log.Verbose(F("\n>"));Log.Verbose(String(Field[ncount]));
       //Serial.print("\r\nCRC=");Serial.println(Field[ncount]);
      // Serial.print('>');Serial.println(Field[ncount]);
       ncount++;
@@ -72,7 +72,7 @@ uint8_t CmdParserClass::stringParser(String s)
     else
     {
       erFlag=true;
-      Log.Error("\nN field exceeds ");Log.Error(String(MAX_CMD_F));Log.Error("\n");
+      Log.Error(F("\nN field exceeds "));Log.Error(String(MAX_CMD_F));Log.Error(F("\n"));
     }
   }//end for
   inString = "";
