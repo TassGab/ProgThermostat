@@ -118,15 +118,20 @@ void LoggingCs::SendZB(String s)
  
   len=byte(s.length());
   s.toCharArray(data,len);
-  byte value = 0;
-  value=CRC8((char *)data,len);
-  Log.Verbose(F("\nCrc:"));Log.Verbose(String(value));Log.Verbose(F("\n"));
-  s+=String(value);
+  #ifdef crc_calc
+    byte value = 0;
+    value=CRC8((char *)data,len);
+    #ifdef debug
+    Log.Verbose(F("\nCrc:"));Log.Verbose(String(value));Log.Verbose(F("\n"));
+    #endif
+    s+=String(value);
+  #endif
   s+='\0';
   len=byte(s.length());
   s.toCharArray(data,len);
   chibiTx(BROADCAST_ADDR, (byte *)data,len);
   #endif
+  return;
 }
 
 //CRC-8 - based on the CRC8 formulas by Dallas/Maxim

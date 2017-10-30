@@ -18,14 +18,17 @@ AlarmId id0, id1, id2, id3, id4, id5, idse0, idse1;
 StatusCs HStat = StatusCs(); //Declare the status class
 HeaterSchedulerCs HS = HeaterSchedulerCs(); //class instance
 CmdParserClass CP = CmdParserClass();
-int loop_c = 1;
+int Disp_per = 1;
+int Hour_Count=1;
 String usbCommand = "";
 int SwHeaters = 5;
 //
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(38400);
-
+#ifdef zigbee
+  chibiInit();
+#endif
   pinMode(SwHeaters, OUTPUT);
   digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
@@ -36,15 +39,13 @@ void setup() {
     HStat.SaveToEEProm();
   }
   HStat.ReadFromEEProm();
-#ifdef zigbee
-  chibiInit();
-#endif
+
   Log.Verbose(F("\nStatus:")); Log.Verbose(F("\n"));
   Log.Verbose(F("size=")); Log.Verbose(String(sizeof(HStat.Status), DEC)); Log.Verbose(F("\n"));
   Log.Verbose(F("mode=")); Log.Verbose(String(HStat.Status.Mode)); Log.Verbose(F("\n"));
   Log.Verbose(F("Loglev=")); Log.Verbose(String(HStat.Status.Uartlev)); Log.Verbose(F("\n"));
   Log.Verbose(F("ClockPeriod=")); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose(F("\n"));
-  setTime(23, 59, 50, 16, 10, 17); // set time
+  setTime(23, 59, 50, 30, 10, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
   UpdateSched();
   
@@ -78,16 +79,28 @@ void loop() {
     // discard the data if the length is 0. that means its a duplicate packet
     if (len > 0)
     {
-      Log.Info(F("\nReceived a command\n"));
+      Log.Info(F("\nReceived a command by ZB\n"));
+//      String zbcom=String((char *)buf);
+//      Log.Info(F("\nCmd str="));Log.Info(zbcom);Log.Info("\n");
+//      int crc=zbcom.substring(zbcom.lastIndexOf('.')).toInt();
+//      Log.Verbose(F("\nCrc extr="));Log.Verbose(String(crc));Log.Verbose(F("\n"));
+//      zbcom=zbcom.substring(0,zbcom.lastIndexOf('.'));
+//      zbcom.toCharArray(buf,length(zbcom));
       CP.Parse(String((char *)buf));
     }
   }
 #endif
   Alarm.delay(1000); // wait one second between clock display
-  if (loop_c++ == HStat.Status.ClockPer)
+  if (Disp_per++ == HStat.Status.ClockPer)
   {
     digitalClockDisplay();
-    loop_c = 1;
+    Disp_per = 1;
+  }
+  if(Hour_Count++ ==3600)
+  {
+    Hour_Count=1;
+    adjustTime(HStat.Status.TimeAdj);
+    Log.Info("\nTime Adjustment of ");Log.Info(String(HStat.Status.TimeAdj));Log.Info(" Sec.\n");
   }
 }//end loop
 /***************************************
@@ -150,11 +163,12 @@ void ExCommand(uint8_t cmd)
       break;
     case 4: //Read Status
       //format: #4.
-      Log.Debug(F("\nCommand Read Status"));
+      Log.Debug(F("\nCommand Read Status\n"));
        if (CP.Nfield == 1)
       {
+        Log.Info(F("#4:"));
         HStat.StatPrint();
-        Log.Info(F("NextEvent at: "));Log.Info(HS.TimeToStr(Alarm.getNextTrigger()));Log.Info(F("\n"));
+        Log.Info(F("#4:NextEvent at "));Log.Info(HS.TimeToStr(Alarm.getNextTrigger()));Log.Info(F("\n"));
         digitalClockDisplay();
         Log.Info(F("#4:OK\n"));
       }

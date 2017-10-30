@@ -58,7 +58,7 @@ void StatusCs::ChangePar(Log_en _Uartlev, Log_en _ZBlev, Mode_en _Mode, uint8_t 
 }
 void StatusCs::StatPrint()
 {
-  Log.Info(F("\nStatus=["));
+  Log.Info(F("Status=["));
   Log.Info(F("Heater=")); Log.Info(String(Status.HeaterStatus ? "ON":"OFF"));
   Log.Info(F(",Mode=")); Log.Info(ModeToStr(Status.Mode));
   Log.Info(F(",UART=")); Log.Info(Log.LevToStr(Status.Uartlev));
