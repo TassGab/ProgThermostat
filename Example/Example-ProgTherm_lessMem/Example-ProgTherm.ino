@@ -32,9 +32,10 @@ void setup() {
   pinMode(SwHeaters, OUTPUT);
   digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
-  if (HS.GetEEPromEmpty() == 0)
+  if (HS.GetEEPromEmpty() !=1)
   {
     Log.Debug(F("\nEEPROM write default...\n"));
+    HS.ClearEEProm();
     HS.EEPromDefault();
     HStat.SaveToEEProm();
   }
@@ -45,7 +46,7 @@ void setup() {
   Log.Verbose(F("mode=")); Log.Verbose(String(HStat.Status.Mode)); Log.Verbose(F("\n"));
   Log.Verbose(F("Loglev=")); Log.Verbose(String(HStat.Status.Uartlev)); Log.Verbose(F("\n"));
   Log.Verbose(F("ClockPeriod=")); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose(F("\n"));
-  setTime(23, 59, 50, 30, 10, 17); // set time
+  setTime(20,45,0, 30, 10, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
   UpdateSched();
   
@@ -168,7 +169,9 @@ void ExCommand(uint8_t cmd)
       {
         Log.Info(F("#4:"));
         HStat.StatPrint();
-        Log.Info(F("#4:NextEvent at "));Log.Info(HS.TimeToStr(Alarm.getNextTrigger()));Log.Info(F("\n"));
+        Log.Info(F("#4:NextEvent at "));
+        Log.Info(HS.DateTimeToStr(Alarm.getNextTrigger()));
+        Log.Info(F("\n"));
         digitalClockDisplay();
         Log.Info(F("#4:OK\n"));
       }
@@ -185,6 +188,7 @@ void ExCommand(uint8_t cmd)
         uint8_t _ClockPer = CP.Field[4]; Log.Verbose(String(_ClockPer)); Log.Verbose(",");
         int _TimeAdj = CP.Field[5]; Log.Verbose(String(_TimeAdj)); Log.Verbose(",");
         HStat.ChangePar(_Uartlev, _ZBlev, _Mode, _ClockPer, _TimeAdj);
+        HStat.ReadFromEEProm();
         Log.Info(F("#5:OK\n"));
       }
       else Log.Error(F("\n#5:Num. of field is wrong\n"));
@@ -239,8 +243,12 @@ void ExCommand(uint8_t cmd)
         uint8_t _onoff = CP.Field[6]; Log.Verbose(String(_onoff)); Log.Verbose(F("\n"));
 //        uint8_t _swn = CP.Field[7]; Log.Verbose(String(_swn)); Log.Verbose("\n"));
         Log.Info("\n#8:");
-        Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + _Tqua * 900), _en, _onoff, sw1)); Log.Info(F("\n"));
+        time_t tday=HS.QuartToTime(_Tqua);
+        Log.Verbose(F("\nTime in sec="));Log.Verbose(String(tday));Log.Verbose(F("\n"));
+        Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + tday), _en, _onoff, sw1)); Log.Info(F("\n"));
         HS. WrEEPROMevent(0, HS.Sched.EventFuture);
+        HStat.NextState(_Once); //Setmode out of home
+        UpdateSched();
         Log.Info(F("#8:OK\n"));
       }
       else Log.Error(F("\n#8:Num. of field is wrong\n"));

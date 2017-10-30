@@ -56,6 +56,7 @@ class HeaterSchedulerCs
     String SetEventDay(timeDayOfWeek_t, uint8_t, TimeQuarter_sc, EventState_sc, SwitchState_sc, SwitchNum_sc);
     String SetEventOnce(uint8_t, time_t, EventState_sc, SwitchState_sc, SwitchNum_sc);
     String TimeToStr(time_t);
+    String DateTimeToStr(time_t);
     time_t SetTimeOfDay(uint8_t, uint8_t, uint8_t);
     time_t QuartToTime(TimeQuarter_sc);
     time_t SetTimeEvent(uint8_t, uint8_t, uint8_t,uint8_t, uint8_t, uint8_t);

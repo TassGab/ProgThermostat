@@ -55,7 +55,7 @@ time_t HeaterSchedulerCs::QuartToTime(TimeQuarter_sc qt)
     tt = qt * SECS_PER_MIN * 15 + 5;
 #endif
   }
-  Log.Verbose(F("\ntime="));Log.Verbose(String(tt));Log.Verbose(F("\n"));
+  Log.Verbose(F("\ntime=")); Log.Verbose(String(tt)); Log.Verbose(F("\n"));
   return tt;
 }
 String HeaterSchedulerCs::EventToStrShort(EventType_sc Ev)
@@ -74,7 +74,7 @@ String HeaterSchedulerCs::EventToStrShort(EventType_sc Ev)
 String HeaterSchedulerCs::EventOnceToStrShort(EventFuture_sc Ev)
 {
   String s = "[";
-  s += TimeToStr(Ev.TimeEv);
+  s += DateTimeToStr(Ev.TimeEv);
   s += ",";
   s += Ev.EventCtrl.isEnabled;
   s += ",";
@@ -123,6 +123,22 @@ String HeaterSchedulerCs::TimeToStr(time_t tt)
   //  Serial.println(second(tt));
   return s;
 }
+String HeaterSchedulerCs::DateTimeToStr(time_t tt)
+{
+  String s = "";
+  s += hour(tt);
+  s += ":";
+  s += minute(tt);
+  s += ":";
+  s += second(tt);
+  s += " ";
+  s += day(tt);
+  s += "/";
+  s += month(tt);
+  s += "/";
+  s += year(tt);
+  return s;
+}
 time_t HeaterSchedulerCs::SetTimeOfDay(uint8_t hh, uint8_t mm, uint8_t ss)
 {
   tmElements_t tt;
@@ -140,8 +156,7 @@ time_t HeaterSchedulerCs::SetTimeEvent(uint8_t hh, uint8_t mm, uint8_t ss, uint8
   tt.Second = ss;
   tt.Day = dd;
   tt.Month = mo;
-  tt.Year = CalendarYrToTm(yy);
-  //Log.Verbose("\ntime=");Log.Verbose(String(tt));Log.Verbose("\n"));
+  tt.Year = y2kYearToTm(yy);
   return makeTime(tt);
 }
 void HeaterSchedulerCs::RdEEPROMday(timeDayOfWeek_t dow, uint8_t _evnum)
@@ -235,37 +250,37 @@ void HeaterSchedulerCs::EEPromDefault()
     Log.Info(SetEventDay(_dow, 5, 5, evEN, swOFF, sw1)); Log.Info(F("\n"));
     WrEEPROMdayEv(Sched.Daily);
 #else
-    Sched.Daily.EvNum=0;
+    Sched.Daily.EvNum = 0;
     Sched.Daily.Event.EvTimeQ = 26; //6:30
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
-    Sched.Daily.EvNum=1;
+    Sched.Daily.EvNum = 1;
     Sched.Daily.Event.EvTimeQ = 32; //8:00
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swOFF;
     WrEEPROMdayEv(Sched.Daily);
-        Sched.Daily.EvNum=2;
+    Sched.Daily.EvNum = 2;
     Sched.Daily.Event.EvTimeQ = 48; //12:00
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
-        Sched.Daily.EvNum=3;
+    Sched.Daily.EvNum = 3;
     Sched.Daily.Event.EvTimeQ = 56; //14:00
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swOFF;
     WrEEPROMdayEv(Sched.Daily);
-        Sched.Daily.EvNum=4;
+    Sched.Daily.EvNum = 4;
     Sched.Daily.Event.EvTimeQ = 64; //16:00
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
-        Sched.Daily.EvNum=5;
+    Sched.Daily.EvNum = 5;
     Sched.Daily.Event.EvTimeQ = 100; //22:30
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
@@ -274,7 +289,7 @@ void HeaterSchedulerCs::EEPromDefault()
 #endif
   }
 #ifdef debug
-  Log.Info(SetEventOnce(0, SetTimeEvent(0, 1, 0, 26, 10, 2017), evEN, swON, sw1)); Log.Info("\n"));
+  Log.Info(SetEventOnce(0, SetTimeEvent(0, 1, 0, 5, 11,17), evEN, swON, sw1)); Log.Info("\n"));
   //  Log.Info(SetEventOnce(1,SetTimeEvent(0,1,5,26,10,2017),evEN,swOFF,sw1));Log.Info("\n"));
 #else
   Sched.EventFuture.TimeEv = SetTimeEvent(16, 0, 0, 5, 11, 17); //
@@ -309,11 +324,11 @@ void HeaterSchedulerCs::ClearEEProm()
 bool HeaterSchedulerCs::GetNextDayEv(timeDayOfWeek_t _dow)
 {
   time_t _now = now();
-  Log.Verbose(F("\nTime in sec="));Log.Verbose(String(elapsedSecsToday(_now)));Log.Verbose(F("\n"));
+  Log.Verbose(F("\nTime in sec=")); Log.Verbose(String(elapsedSecsToday(_now))); Log.Verbose(F("\n"));
   for (int _ev = 0; _ev < nEventPerDay; _ev++)
   {
     RdEEPROMday(_dow, _ev);
-    if ((elapsedSecsToday(_now) <= Sched.Daily.Event.EvTimeQ*15*SECS_PER_MIN) && (Sched.Daily.Event.EventCtrl.isEnabled))
+    if ((elapsedSecsToday(_now) <= Sched.Daily.Event.EvTimeQ * 15 * SECS_PER_MIN) && (Sched.Daily.Event.EventCtrl.isEnabled))
     {
       Log.Debug(F("\nEvent found in today =")); Log.Debug(String(_ev)); Log.Debug(F("\n"));
       return false;
