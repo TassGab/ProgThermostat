@@ -8,11 +8,11 @@ device. Its basically just to show how to change the channel.
 
 byte msg[] = "Hello World";
 byte buf[CHB_MAX_PAYLOAD];
-
+String msgToSend="";
 void setup()
 {
   Serial.begin(57600);
-  Serial.setTimeout(2000);
+  Serial.setTimeout(1000);
   // Init the chibi wireless stack
   chibiInit();
   
@@ -34,13 +34,30 @@ void loop()
   // transmitting.
   if (chibiDataRcvd() == true)
   {
-    chibiGetData(buf);
-    Serial.println((char *)buf);
+    Serial.print("(");
+    int len, rssi, src_addr;
+    byte buf[CHB_MAX_PAYLOAD];  // this is where we store the received data
+    
+    // retrieve the data and the signal strength
+    len = chibiGetData(buf);
+    Serial.print(len);
+    // discard the data if the length is 0. that means its a duplicate packet
+    if (len > 0){    
+
+//    rssi = chibiGetRSSI();
+    src_addr = chibiGetSrcAddr();
+    
+    // Print out the message and the signal strength
+//    Serial.print("Message received from node 0x");
+//    Serial.print(src_addr, HEX);
+    Serial.print(")> "); 
+    Serial.print((char *)buf); //CharToStr(buf));//
+    }
   }
   if(Serial.available()>0)
   {
     String s=Serial.readString();
-    Serial.println(s);
+    Serial.print("<");Serial.print(s);
     SendZB(s);
   }
   // delay half a second between transmission
@@ -48,13 +65,19 @@ void loop()
 }
 void SendZB(String s)
 {
-  #ifdef zigbee
+ 
   byte data[CHB_MAX_PAYLOAD];
   unsigned int len;
+  msgToSend+=s;
+  Serial.print("\n-");Serial.println(msgToSend);
+  len=msgToSend.length();
+  char ce=msgToSend[len-1];
   
- 
-  len=byte(s.length());
-  s.toCharArray(data,len);
+  if ((ce=='\n')|(ce=='\0'))
+  {
+    Serial.print("\n--");Serial.println(String(ce));
+//  len=byte(s.length());
+//  s.toCharArray(data,len);
 //  #ifdef crc_calc
 //    byte value = 0;
 //    value=CRC8((char *)data,len);
@@ -63,10 +86,13 @@ void SendZB(String s)
 //    #endif
 //    s+=String(value);
 //  #endif
-//  s+='\0';
-//  len=byte(s.length());
-//  s.toCharArray(data,len);
+  //s+='\0';
+  //len=byte(s.length());
+  Serial.print("Len=");Serial.println(len);
+  msgToSend.toCharArray(data,len);
+  msgToSend="";
   chibiTx(BROADCAST_ADDR, (byte *)data,len);
-  #endif
+  }
+  
   return;
 }
