@@ -13,13 +13,13 @@
 #include "ProgThermClass.h"
 #include <TimeAlarms.h>
 
-AlarmId id0, id1, id2, id3, id4, id5, idse0, idse1;
+AlarmId id0,idse0;
 //EventNum_sc ev; //Global var for event of the day
 StatusCs HStat = StatusCs(); //Declare the status class
 HeaterSchedulerCs HS = HeaterSchedulerCs(); //class instance
 CmdParserClass CP = CmdParserClass();
 int Disp_per = 1;
-int Hour_Count=1;
+int Hour_Count = 1;
 String usbCommand = "";
 int SwHeaters = 5;
 //
@@ -28,11 +28,12 @@ void setup() {
   Serial.begin(38400);
 #ifdef zigbee
   chibiInit();
+  chibiSetChannel(20);
 #endif
   pinMode(SwHeaters, OUTPUT);
   digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
-  if (HS.GetEEPromEmpty() !=1)
+  if (HS.GetEEPromEmpty() != 1)
   {
     Log.Debug(F("\nEEPROM write default...\n"));
     HS.ClearEEProm();
@@ -46,10 +47,10 @@ void setup() {
   Log.Verbose(F("mode=")); Log.Verbose(String(HStat.Status.Mode)); Log.Verbose(F("\n"));
   Log.Verbose(F("Loglev=")); Log.Verbose(String(HStat.Status.Uartlev)); Log.Verbose(F("\n"));
   Log.Verbose(F("ClockPeriod=")); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose(F("\n"));
-  setTime(20,45,0, 30, 10, 17); // set time
+  setTime(20, 45, 0, 30, 10, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
   UpdateSched();
-  
+
 }
 
 void loop() {
@@ -70,38 +71,49 @@ void loop() {
       ExCommand(CP.Cmd);
     }
   }
-#ifdef zigbee
+  //#ifdef zigbee
   if (chibiDataRcvd() == true)
   {
     int len;
     byte buf[CHB_MAX_PAYLOAD];  // this is where we store the received data
     // retrieve the data and the signal strength
     len = chibiGetData(buf);
+    Log.Info(F("\nReceived a command by ZB ")); Log.Info(String(len)); Log.Info(F("\n"));
     // discard the data if the length is 0. that means its a duplicate packet
     if (len > 0)
     {
-      Log.Info(F("\nReceived a command by ZB\n"));
-//      String zbcom=String((char *)buf);
-//      Log.Info(F("\nCmd str="));Log.Info(zbcom);Log.Info("\n");
-//      int crc=zbcom.substring(zbcom.lastIndexOf('.')).toInt();
-//      Log.Verbose(F("\nCrc extr="));Log.Verbose(String(crc));Log.Verbose(F("\n"));
-//      zbcom=zbcom.substring(0,zbcom.lastIndexOf('.'));
-//      zbcom.toCharArray(buf,length(zbcom));
+      // Log.Info(F("\nReceived a command by ZB\n"));
+      //      String zbcom=String((char *)buf);
+      //      Log.Info(F("\nCmd str="));Log.Info(zbcom);Log.Info("\n");
+      //      int crc=zbcom.substring(zbcom.lastIndexOf('.')).toInt();
+      //      Log.Verbose(F("\nCrc extr="));Log.Verbose(String(crc));Log.Verbose(F("\n"));
+      //      zbcom=zbcom.substring(0,zbcom.lastIndexOf('.'));
+      //      zbcom.toCharArray(buf,length(zbcom));
+      String rxmsg = String((char *)buf);
+      Log.Verbose(F("\nZB message:")); Log.Verbose(rxmsg); Log.Verbose(F("\n"));
       CP.Parse(String((char *)buf));
+      if (CP.erFlag)
+      {
+        Log.Error(F("\nCommand Error\n"));
+      }
+      else
+      {
+        ExCommand(CP.Cmd);
+      }
     }
   }
-#endif
-  Alarm.delay(1000); // wait one second between clock display
+  //#endif
+  Alarm.delay(1000); // wait one second between clock display2
   if (Disp_per++ == HStat.Status.ClockPer)
   {
     digitalClockDisplay();
     Disp_per = 1;
   }
-  if(Hour_Count++ ==3600)
+  if (Hour_Count++ == 3600)
   {
-    Hour_Count=1;
+    Hour_Count = 1;
     adjustTime(HStat.Status.TimeAdj);
-    Log.Info("\nTime Adjustment of ");Log.Info(String(HStat.Status.TimeAdj));Log.Info(" Sec.\n");
+    Log.Info("\nTime Adjustment of "); Log.Info(String(HStat.Status.TimeAdj)); Log.Info(" Sec.\n");
   }
 }//end loop
 /***************************************
@@ -165,7 +177,7 @@ void ExCommand(uint8_t cmd)
     case 4: //Read Status
       //format: #4.
       Log.Debug(F("\nCommand Read Status\n"));
-       if (CP.Nfield == 1)
+      if (CP.Nfield == 1)
       {
         Log.Info(F("#4:"));
         HStat.StatPrint();
@@ -176,7 +188,7 @@ void ExCommand(uint8_t cmd)
         Log.Info(F("#4:OK\n"));
       }
       else Log.Error(F("\n#4:Num. of field is wrong\n"));
-    break;
+      break;
     case 5: //Change Status Parameters
       //format: #5,Uartlev,ZBlev,Mode,ClockPer,TimeAdj.
       if (CP.Nfield == 6)
@@ -215,8 +227,8 @@ void ExCommand(uint8_t cmd)
       {
         Log.Debug(F("\nCommand Manualy Turn Heater: "));
         HStat.NextState(_Manual); //Set manual mode
-        Heater_en _HeaterStat=CP.Field[1]; Log.Verbose(String(_HeaterStat)); Log.Verbose(F("\n"));
-        if(_HeaterStat==_ON)
+        Heater_en _HeaterStat = CP.Field[1]; Log.Verbose(String(_HeaterStat)); Log.Verbose(F("\n"));
+        if (_HeaterStat == _ON)
         {
           Log.Debug(F("ON\n"));
           TurnON();
@@ -241,10 +253,10 @@ void ExCommand(uint8_t cmd)
         uint8_t _Tyy = CP.Field[4]; Log.Verbose(String(_Tyy)); Log.Verbose(",");
         uint8_t _en = CP.Field[5]; Log.Verbose(String(_en)); Log.Verbose(",");
         uint8_t _onoff = CP.Field[6]; Log.Verbose(String(_onoff)); Log.Verbose(F("\n"));
-//        uint8_t _swn = CP.Field[7]; Log.Verbose(String(_swn)); Log.Verbose("\n"));
+        //        uint8_t _swn = CP.Field[7]; Log.Verbose(String(_swn)); Log.Verbose("\n"));
         Log.Info("\n#8:");
-        time_t tday=HS.QuartToTime(_Tqua);
-        Log.Verbose(F("\nTime in sec="));Log.Verbose(String(tday));Log.Verbose(F("\n"));
+        time_t tday = HS.QuartToTime(_Tqua);
+        Log.Verbose(F("\nTime in sec=")); Log.Verbose(String(tday)); Log.Verbose(F("\n"));
         Log.Info(HS.SetEventOnce(0, (HS.SetTimeEvent(0, 0, 0, _Tgg, _Tmo, _Tyy) + tday), _en, _onoff, sw1)); Log.Info(F("\n"));
         HS. WrEEPROMevent(0, HS.Sched.EventFuture);
         HStat.NextState(_Once); //Setmode out of home
@@ -258,7 +270,7 @@ void ExCommand(uint8_t cmd)
       if (CP.Nfield == 2)
       {
         Log.Debug(F("\nCommand Out of Home hours: "));
-        uint8_t _hours=CP.Field[1]; Log.Verbose(String(_hours*SECS_PER_HOUR)); Log.Verbose(F("\n"));
+        uint8_t _hours = CP.Field[1]; Log.Verbose(String(_hours * SECS_PER_HOUR)); Log.Verbose(F("\n"));
         HStat.NextState(_Out); //Setmode out of home
         TurnOFF();
         id0 = Alarm.timerOnce(_hours, BackHome);
@@ -315,7 +327,7 @@ void UpdateDailySched()
 void Event0R() {
   //AlarmId id=  Alarm.getTriggeredAlarmId();
   //HStat.Status.EvCalled = 0;
-  Log.Info(F("\nTriggered Alarm: dow=")); Log.Info(String(HS.Sched.Daily.dow)); Log.Info(F(", ev num="));Log.Info(String(HS.Sched.Daily.EvNum)); Log.Info(F("\n"));
+  Log.Info(F("\nTriggered Alarm: dow=")); Log.Info(String(HS.Sched.Daily.dow)); Log.Info(F(", ev num=")); Log.Info(String(HS.Sched.Daily.EvNum)); Log.Info(F("\n"));
   if (HStat.Status.Mode == _Daily)
   {
     if (HS.Sched.Daily.Event.EventCtrl.swTurn == swON)
@@ -380,15 +392,15 @@ void UpdateSchedOnce()
 //-----------------------------------------
 void UpdateSched()
 {
-  if(HStat.Status.Mode==_Daily) UpdateDailySched();
-  else if(HStat.Status.Mode==_Once) UpdateSchedOnce();
+  if (HStat.Status.Mode == _Daily) UpdateDailySched();
+  else if (HStat.Status.Mode == _Once) UpdateSchedOnce();
   return;
 }
 void TurnON()
 {
   Log.Info(F("\nHeater ON\n"));
   digitalWrite(SwHeaters, HIGH);
-  HStat.Status.HeaterStatus=_ON;
+  HStat.Status.HeaterStatus = _ON;
   HStat.SaveToEEProm();
 }
 
@@ -396,7 +408,7 @@ void TurnOFF()
 {
   Log.Info(F("\nHeater OFF\n"));
   digitalWrite(SwHeaters, LOW);
-  HStat.Status.HeaterStatus=_OFF;
+  HStat.Status.HeaterStatus = _OFF;
   HStat.SaveToEEProm();
 }
 void digitalClockDisplay() {

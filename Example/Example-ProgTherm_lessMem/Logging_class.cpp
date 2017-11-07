@@ -23,22 +23,6 @@ void LoggingCs::Verbose(String s)
   #endif
   }
 }
-//void LoggingCs::Verbose(char s[])
-//{
-//  if(_Verbose>=Log.LogLevel)
-//  {
-//    Print(s);
-//  }
-//  if((_Verbose>=Log.ZBLogLevel)&(Log.ZBen))
-//  {
-//  SendZB(s);
-//  #ifdef debug
-//    Serial.print(F("ZB:");
-//    Serial.print(s);
-//    if(Log.AutoCR) Serial.println();
-//  #endif
-//  }
-//}
 void LoggingCs::Debug(String s)
 {
   if(_Debug>=Log.LogLevel)
@@ -111,25 +95,56 @@ String LoggingCs::LevToStr(Log_en lev)
 }
 void LoggingCs::SendZB(String s)
 {
+//  #ifdef zigbee
+//  byte data[CHB_MAX_PAYLOAD];
+//  unsigned int len;
+//  if(Log.AutoCR) s+='\n';
+// 
+//  len=byte(s.length());
+//  Log.Verbose(F("(len="));Log.Verbose(String(len));Log.Verbose(F(")\n"));
+//  //s.toCharArray(data,len);
+//  #ifdef crc_calc
+//    byte value = 0;
+//    value=CRC8((char *)data,len);
+//    #ifdef debug
+//    Log.Verbose(F("\nCrc:"));Log.Verbose(String(value));Log.Verbose(F("\n"));
+//    #endif
+//    s+=String(value);
+//  #endif
+//  s+='\0';
+//  len=byte(s.length());
+//  s.toCharArray(data,len);
+//  chibiTx(BROADCAST_ADDR, (byte *)data,len);
+//  #endif
   #ifdef zigbee
   byte data[CHB_MAX_PAYLOAD];
-  unsigned int len;
-  if(Log.AutoCR) s+='\n';
- 
-  len=byte(s.length());
-  s.toCharArray(data,len);
+  unsigned int len;  
+  msgTx+=s;
+  len=byte(msgTx.length());  
+  char endCh=msgTx[len-1];
+  if(endCh=='\n')
+  {
+  if(!Log.AutoCR) 
+  {
+    msgTx.remove(len-1,1);
+    len--;
+  }
+  //Log.Verbose(F("(len="));Log.Verbose(String(len));Log.Verbose(F(")\n"));
+  //s.toCharArray(data,len);
   #ifdef crc_calc
     byte value = 0;
     value=CRC8((char *)data,len);
     #ifdef debug
     Log.Verbose(F("\nCrc:"));Log.Verbose(String(value));Log.Verbose(F("\n"));
     #endif
-    s+=String(value);
+    msgTx+=String(value);
   #endif
-  s+='\0';
-  len=byte(s.length());
-  s.toCharArray(data,len);
+  msgTx+='\0';
+  len++;
+  msgTx.toCharArray(data,len);
+  msgTx="";
   chibiTx(BROADCAST_ADDR, (byte *)data,len);
+  }
   #endif
   return;
 }

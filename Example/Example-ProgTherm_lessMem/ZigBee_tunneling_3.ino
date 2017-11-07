@@ -34,13 +34,13 @@ void loop()
   // transmitting.
   if (chibiDataRcvd() == true)
   {
-    Serial.print("(");
+    //Serial.print("(");
     int len, rssi, src_addr;
     byte buf[CHB_MAX_PAYLOAD];  // this is where we store the received data
     
     // retrieve the data and the signal strength
     len = chibiGetData(buf);
-    Serial.print(len);
+    //Serial.print(len);
     // discard the data if the length is 0. that means its a duplicate packet
     if (len > 0){    
 
@@ -50,14 +50,14 @@ void loop()
     // Print out the message and the signal strength
 //    Serial.print("Message received from node 0x");
 //    Serial.print(src_addr, HEX);
-    Serial.print(")> "); 
-    Serial.print((char *)buf); //CharToStr(buf));//
+    Serial.print("> "); 
+    Serial.println((char *)buf); //CharToStr(buf));//
     }
   }
   if(Serial.available()>0)
   {
     String s=Serial.readString();
-    Serial.print("<");Serial.print(s);
+    Serial.print("<");Serial.println(s);
     SendZB(s);
   }
   // delay half a second between transmission
@@ -69,13 +69,13 @@ void SendZB(String s)
   byte data[CHB_MAX_PAYLOAD];
   unsigned int len;
   msgToSend+=s;
-  Serial.print("\n-");Serial.println(msgToSend);
+  //Serial.print("\n-");Serial.println(msgToSend);
   len=msgToSend.length();
   char ce=msgToSend[len-1];
   
   if ((ce=='\n')|(ce=='\0'))
   {
-    Serial.print("\n--");Serial.println(String(ce));
+    //Serial.print("\n--");Serial.println(String(ce));
 //  len=byte(s.length());
 //  s.toCharArray(data,len);
 //  #ifdef crc_calc
@@ -88,7 +88,10 @@ void SendZB(String s)
 //  #endif
   //s+='\0';
   //len=byte(s.length());
-  Serial.print("Len=");Serial.println(len);
+  //Serial.print("Len=");Serial.println(len);
+  msgToSend.remove(len-1,1);
+  msgToSend+='\0';
+  //len++;
   msgToSend.toCharArray(data,len);
   msgToSend="";
   chibiTx(BROADCAST_ADDR, (byte *)data,len);

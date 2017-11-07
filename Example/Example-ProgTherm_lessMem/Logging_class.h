@@ -25,7 +25,8 @@ class LoggingCs
    void Print(String);
 //   void Print(char[]);
    void SendZB(String);
-   byte CRC8(const byte *, byte);    
+   byte CRC8(const byte *, byte);
+   String msgTx; 
 };
 extern LoggingCs Log; //make an instance for the user
 
