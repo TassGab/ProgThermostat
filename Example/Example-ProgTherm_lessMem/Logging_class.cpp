@@ -124,11 +124,11 @@ void LoggingCs::SendZB(String s)
   char endCh=msgTx[len-1];
   if(endCh=='\n')
   {
-  if(!Log.AutoCR) 
-  {
-    msgTx.remove(len-1,1);
-    len--;
-  }
+//  if(!Log.AutoCR) 
+//  {
+//    msgTx.remove(len-1,1);
+//    len--;
+//  }
   //Log.Verbose(F("(len="));Log.Verbose(String(len));Log.Verbose(F(")\n"));
   //s.toCharArray(data,len);
   #ifdef crc_calc

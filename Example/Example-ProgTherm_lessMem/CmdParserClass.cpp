@@ -14,7 +14,8 @@ void CmdParserClass::Parse(String inCommand){
    Cmd=-1;
    erFlag=false;
    Nfield=-1;
-   if (inCommand[inCommand.length()-1] == '.' && inCommand[0]=='#')//
+   byte len=byte(inCommand.length());
+   if (inCommand[len-2] == '.' && inCommand[0]=='#' && inCommand[len-1] == '\n')//
     {
        //unsigned short value;
        char data[100];
@@ -42,7 +43,7 @@ uint8_t CmdParserClass::stringParser(String s)
   for (is=1;is<s.length();is++) //from 1 discard #
   {
     
-    if (isDigit(s[is])) {
+    if (isDigit(s[is]) || s[is]=='-') {
       // convert the incoming byte to a char
       // and add it to the string:
       inString += (char)s[is];
@@ -52,7 +53,7 @@ uint8_t CmdParserClass::stringParser(String s)
       if (s[is] == ',' ) 
       {
        Field[ncount]=inString.toInt();
-       //Log.Verbose("\n>");Log.Verbose(String(Field[ncount]));
+       Log.Verbose(F("\n>"));Log.Verbose(String(Field[ncount]));Log.Verbose(F("\n"));
        ncount++;
        // clear the string for new input:
        inString = "";

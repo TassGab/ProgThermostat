@@ -13,7 +13,7 @@
 #include "ProgThermClass.h"
 #include <TimeAlarms.h>
 
-AlarmId id0,idse0;
+AlarmId id0, idse0;
 //EventNum_sc ev; //Global var for event of the day
 StatusCs HStat = StatusCs(); //Declare the status class
 HeaterSchedulerCs HS = HeaterSchedulerCs(); //class instance
@@ -112,8 +112,11 @@ void loop() {
   if (Hour_Count++ == 3600)
   {
     Hour_Count = 1;
-    adjustTime(HStat.Status.TimeAdj);
-    Log.Info("\nTime Adjustment of "); Log.Info(String(HStat.Status.TimeAdj)); Log.Info(" Sec.\n");
+    int _TimeAdj = 0;
+    if (HStat.Status.TimeAdj > 127) _TimeAdj = HStat.Status.TimeAdj - 256;
+    else _TimeAdj = HStat.Status.TimeAdj;
+    adjustTime(_TimeAdj);
+    Log.Info("\nTime Adjustment of "); Log.Info(String(_TimeAdj)); Log.Info(" Sec.\n");
   }
 }//end loop
 /***************************************
@@ -183,7 +186,7 @@ void ExCommand(uint8_t cmd)
         HStat.StatPrint();
         Log.Info(F("#4:NextEvent at "));
         Log.Info(HS.DateTimeToStr(Alarm.getNextTrigger()));
-        Log.Info(F("\n"));
+        Log.Info(F("\n#4:"));
         digitalClockDisplay();
         Log.Info(F("#4:OK\n"));
       }
@@ -198,7 +201,11 @@ void ExCommand(uint8_t cmd)
         Log_en _ZBlev = CP.Field[2]; Log.Verbose(String(_ZBlev)); Log.Verbose(",");
         Mode_en _Mode = CP.Field[3]; Log.Verbose(String(_Mode)); Log.Verbose(",");
         uint8_t _ClockPer = CP.Field[4]; Log.Verbose(String(_ClockPer)); Log.Verbose(",");
-        int _TimeAdj = CP.Field[5]; Log.Verbose(String(_TimeAdj)); Log.Verbose(",");
+        uint8_t tadjc2 = CP.Field[5];
+        int _TimeAdj = 0;
+        if (tadjc2 > 127) _TimeAdj = tadjc2 - 256;
+        else _TimeAdj = tadjc2;
+        Log.Verbose(String(_TimeAdj)); Log.Verbose(",");
         HStat.ChangePar(_Uartlev, _ZBlev, _Mode, _ClockPer, _TimeAdj);
         HStat.ReadFromEEProm();
         Log.Info(F("#5:OK\n"));

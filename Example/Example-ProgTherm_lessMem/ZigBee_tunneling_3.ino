@@ -51,7 +51,7 @@ void loop()
 //    Serial.print("Message received from node 0x");
 //    Serial.print(src_addr, HEX);
     Serial.print("> "); 
-    Serial.println((char *)buf); //CharToStr(buf));//
+    Serial.print((char *)buf); //CharToStr(buf));//
     }
   }
   if(Serial.available()>0)
@@ -89,9 +89,9 @@ void SendZB(String s)
   //s+='\0';
   //len=byte(s.length());
   //Serial.print("Len=");Serial.println(len);
-  msgToSend.remove(len-1,1);
+  //msgToSend.remove(len-1,1);
   msgToSend+='\0';
-  //len++;
+  len++;
   msgToSend.toCharArray(data,len);
   msgToSend="";
   chibiTx(BROADCAST_ADDR, (byte *)data,len);
