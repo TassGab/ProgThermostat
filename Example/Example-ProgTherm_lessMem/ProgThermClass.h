@@ -24,8 +24,8 @@ class StatusCs
   StatusCs();
   void NextState(Mode_en);
   void BackLastState();
-  void ReadFromEEProm(); 
-  void SaveToEEProm();
+  HeaterStatusSt ReadFromEEProm(); 
+  void SaveToEEProm(HeaterStatusSt);
   void ChangePar(Log_en ,Log_en ,Mode_en ,uint8_t , int );
     void StatPrint();
   private:  

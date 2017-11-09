@@ -29,22 +29,24 @@ void StatusCs::BackLastState()
   return;
 }
 
-void StatusCs::SaveToEEProm()
+void StatusCs::SaveToEEProm(HeaterStatusSt _stat)
 {
-  EEPROM.put(GetEEoffAddress, Status);
+  EEPROM.put(GetEEoffAddress, _stat);
   Log.Verbose(F("EEPROM write at="));
   Log.Verbose(String(GetEEoffAddress)); Log.Verbose(F("\n"));
   Log.Verbose(F("Struct Size="));
   Log.Verbose(String(sizeof(Status))); Log.Verbose(F("\n"));
 }
-void StatusCs::ReadFromEEProm()
+HeaterStatusSt StatusCs::ReadFromEEProm()
 {
-  EEPROM.get(GetEEoffAddress, Status);
+  HeaterStatusSt _stat;
+  EEPROM.get(GetEEoffAddress, _stat);
   Log.LogLevel = Status.Uartlev;
   Log.ZBen = true;
   Log.ZBLogLevel = Status.ZBlev;
   Log.AutoCR = false;
   StatPrint();
+  return _stat;
 }
 void StatusCs::ChangePar(Log_en _Uartlev, Log_en _ZBlev, Mode_en _Mode, uint8_t _ClockPer, int _TimeAdj)
 {
@@ -53,13 +55,14 @@ void StatusCs::ChangePar(Log_en _Uartlev, Log_en _ZBlev, Mode_en _Mode, uint8_t 
   Status.Mode = _Mode;
   Status.ClockPer = _ClockPer;
   Status.TimeAdj = _TimeAdj;
-  SaveToEEProm();
+  SaveToEEProm(Status);
   return;
 }
 void StatusCs::StatPrint()
 {
   Log.Info(F("Status=["));
-  Log.Info(F("Heater=")); Log.Info(String(Status.HeaterStatus ? "ON":"OFF"));
+  Log.Info(F("Heater=")); //Log.Info(String(Status.HeaterStatus ? "ON":"OFF"));
+  if(Status.HeaterStatus) Log.Info(F("ON")); else Log.Info(F("OFF"));
   Log.Info(F(",Mode=")); Log.Info(ModeToStr(Status.Mode));
   Log.Info(F(",UART=")); Log.Info(Log.LevToStr(Status.Uartlev));
   Log.Info(F(",ZB=")); Log.Info(Log.LevToStr(Status.ZBlev));
