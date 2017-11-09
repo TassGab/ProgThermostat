@@ -11,7 +11,7 @@ byte buf[CHB_MAX_PAYLOAD];
 String msgToSend="";
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(38400);
   Serial.setTimeout(1000);
   // Init the chibi wireless stack
   chibiInit();
@@ -50,14 +50,15 @@ void loop()
     // Print out the message and the signal strength
 //    Serial.print("Message received from node 0x");
 //    Serial.print(src_addr, HEX);
-    Serial.print("> "); 
+    //Serial.print("> "); 
     Serial.print((char *)buf); //CharToStr(buf));//
     }
   }
   if(Serial.available()>0)
   {
     String s=Serial.readString();
-    Serial.print("<");Serial.println(s);
+    Serial.print("<");
+    Serial.println(s);
     SendZB(s);
   }
   // delay half a second between transmission
