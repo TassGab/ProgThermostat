@@ -7,7 +7,8 @@ StatusCs::StatusCs(void)  //Default Constructor
   Status.Mode = _Daily;
   Status.ClockPer = 60;
   Status.TimeAdj = 0;
-  Status.HeaterStatus = 0;
+  State=_OFF;
+  //Status.HeaterStatus = 0;
   //Status.EvCalled = 0;
   Status.LastState = 0;
   GetEEoffAddress = 5;
@@ -62,7 +63,7 @@ void StatusCs::StatPrint()
 {
   Log.Info(F("Status=["));
   Log.Info(F("Heater=")); //Log.Info(String(Status.HeaterStatus ? "ON":"OFF"));
-  if(Status.HeaterStatus) Log.Info(F("ON")); else Log.Info(F("OFF"));
+  if(State) Log.Info(F("ON")); else Log.Info(F("OFF"));
   Log.Info(F(",Mode=")); Log.Info(ModeToStr(Status.Mode));
   Log.Info(F(",UART=")); Log.Info(Log.LevToStr(Status.Uartlev));
   Log.Info(F(",ZB=")); Log.Info(Log.LevToStr(Status.ZBlev));

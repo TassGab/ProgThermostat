@@ -31,7 +31,8 @@ void setup() {
   chibiSetChannel(20);
 #endif
   pinMode(SwHeaters, OUTPUT);
-  digitalWrite(SwHeaters, LOW);
+  TurnOFF();
+  //digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
   Log.Info(F("\nProgrammable Thermostat on Arduino Chibi\n"));
   Log.Info(F("\nFW ver:1.0, author: Gabriele Tasselli, date: 09/11/2017\n"));
@@ -109,6 +110,7 @@ void loop() {
   Alarm.delay(1000); // wait one second between clock display2
   if (Disp_per++ == HStat.Status.ClockPer)
   {
+    Log.Info(F("T>"));
     digitalClockDisplay();
     Disp_per = 1;
   }
@@ -119,7 +121,7 @@ void loop() {
     if (HStat.Status.TimeAdj > 127) _TimeAdj = HStat.Status.TimeAdj - 256;
     else _TimeAdj = HStat.Status.TimeAdj;
     adjustTime(_TimeAdj);
-    Log.Info("\nTime Adjustment of "); Log.Info(String(_TimeAdj)); Log.Info(" Sec.\n");
+    Log.Info(F("\nA>Time Adjustment of ")); Log.Info(String(_TimeAdj)); Log.Info(F(" Sec.\n"));
   }
 }//end loop
 /***************************************
@@ -408,18 +410,18 @@ void UpdateSched()
 }
 void TurnON()
 {
-  Log.Info(F("\nHeater ON\n"));
+  Log.Info(F("\nA>Heater ON\n"));
   digitalWrite(SwHeaters, HIGH);
-  HStat.Status.HeaterStatus = _ON;
-  HStat.SaveToEEProm(HStat.Status);
+  HStat.State = _ON;
+  //HStat.SaveToEEProm(HStat.Status);
 }
 
 void TurnOFF()
 {
-  Log.Info(F("\nHeater OFF\n"));
+  Log.Info(F("\nA>Heater OFF\n"));
   digitalWrite(SwHeaters, LOW);
-  HStat.Status.HeaterStatus = _OFF;
-  HStat.SaveToEEProm(HStat.Status);
+  HStat.State = _OFF;
+  //HStat.SaveToEEProm(HStat.Status);
 }
 void digitalClockDisplay() {
   // digital clock display of the time
