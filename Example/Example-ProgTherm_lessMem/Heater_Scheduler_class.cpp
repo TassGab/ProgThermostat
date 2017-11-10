@@ -13,6 +13,8 @@ HeaterSchedulerCs::HeaterSchedulerCs(void)
 String HeaterSchedulerCs::SetEventDay(timeDayOfWeek_t dow, uint8_t Evnum, TimeQuarter_sc TimeQ, EventState_sc En, SwitchState_sc SwSt, SwitchNum_sc SwN)
 {
   String s = "Dow: ";
+  if(dow>0 && dow <8 && Evnum>=0 && Evnum<7)
+  {
   Sched.Daily.dow = dow;
   Sched.Daily.EvNum = Evnum;
   Sched.Daily.Event.EvTimeQ = TimeQ;
@@ -24,6 +26,12 @@ String HeaterSchedulerCs::SetEventDay(timeDayOfWeek_t dow, uint8_t Evnum, TimeQu
   s += Evnum;
   s += " ; ";
   s += EventToStrShort(Sched.Daily.Event);
+  }
+  else 
+  {
+    Log.Debug(F("Error dow or Evnum\n"));
+    s="";
+  }
   return s;
 }
 String HeaterSchedulerCs::SetEventOnce(uint8_t Evnum,  time_t TimeT, EventState_sc En, SwitchState_sc SwSt, SwitchNum_sc SwN)
