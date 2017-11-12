@@ -20,9 +20,9 @@ typedef struct
 class StatusCs
 {
   public:
-  HeaterStatusSt Status;
+  HeaterStatusSt Status;  
   Heater_en State; //Status of heater ON OFF
-  StatusCs();
+  StatusCs(); 
   void NextState(Mode_en);
   void BackLastState();
   HeaterStatusSt ReadFromEEProm(); 

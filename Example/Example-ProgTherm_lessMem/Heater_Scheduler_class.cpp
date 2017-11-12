@@ -97,21 +97,13 @@ String HeaterSchedulerCs::EventToStrLong(EventType_sc Ev)
   String s = "[Quarter: ";
   s += Ev.EvTimeQ;
   s += " (time: ";
-  //Serial.print("\nEvent=[time: "));
   s += TimeToStr(QuartToTime(Ev.EvTimeQ));
-  //Serial.print(F(" ; En: "));
   s += ") ; En:";
-  //Serial.print(Ev.EventCtrl.isEnabled);
   s += Ev.EventCtrl.isEnabled ? "Enabled" : "Disabled";
-  //Serial.print(F(" ; SwState: "));
   s += " ; SwState: ";
-  //Serial.print(Ev.EventCtrl.swTurn);
   s += Ev.EventCtrl.swTurn ? "ON" : "OFF";
-  //Serial.print(F(" ; SwNum; "));
   s += " ; SwNum; ";
-  //Serial.print(Ev.EventCtrl.nSwitch);
   s += Ev.EventCtrl.nSwitch;
-  //Serial.println("]");
   s += "]";
   return s;
 }
@@ -243,7 +235,7 @@ void HeaterSchedulerCs::EEPromDefault()
 {
   for (int _dow = 1; _dow <= 7; _dow++)
   {
-    Sched.Daily.dow = _dow + 1;
+    Sched.Daily.dow = _dow;
 #ifdef debug
     Log.Info(SetEventDay(_dow, 0, 0, evEN, swON, sw1)); Log.Info(F("\n"));
     WrEEPROMdayEv(Sched.Daily);
@@ -289,7 +281,7 @@ void HeaterSchedulerCs::EEPromDefault()
     Sched.Daily.Event.EventCtrl.swTurn = swON;
     WrEEPROMdayEv(Sched.Daily);
     Sched.Daily.EvNum = 5;
-    Sched.Daily.Event.EvTimeQ = 100; //22:30
+    Sched.Daily.Event.EvTimeQ = 90; //22:30
     Sched.Daily.Event.EventCtrl.isEnabled = evEN;
     Sched.Daily.Event.EventCtrl.nSwitch = sw1;
     Sched.Daily.Event.EventCtrl.swTurn = swOFF;

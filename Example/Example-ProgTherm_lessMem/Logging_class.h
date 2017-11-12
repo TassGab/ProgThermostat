@@ -1,7 +1,7 @@
 #ifndef Logging_h
 #define Logging_h
 #include <Arduino.h>
-#define zigbee
+//#define zigbee
 #ifdef zigbee
  #include <chibi.h>
 #endif

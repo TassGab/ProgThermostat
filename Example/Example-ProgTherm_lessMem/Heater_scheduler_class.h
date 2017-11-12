@@ -32,7 +32,7 @@ typedef struct
 }EventType_sc;
 typedef struct
 {
-  timeDayOfWeek_t dow; // day of the week
+  timeDayOfWeek_t dow; // day of the week 0=mon, ..sun=6,
   uint8_t EvNum;  //event in the day
   EventType_sc Event; //array of events per day
 } DaySchedule_sc;

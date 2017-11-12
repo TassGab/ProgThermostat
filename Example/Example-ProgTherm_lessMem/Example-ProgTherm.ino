@@ -31,8 +31,8 @@ void setup() {
   chibiSetChannel(20);
 #endif
   pinMode(SwHeaters, OUTPUT);
-  TurnOFF();
-  //digitalWrite(SwHeaters, LOW);
+  //TurnOFF();
+  digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
   Log.Info(F("\nProgrammable Thermostat on Arduino Chibi\n"));
   Log.Info(F("\nFW ver:1.0, author: Gabriele Tasselli, date: 09/11/2017\n"));
@@ -46,11 +46,6 @@ void setup() {
   }
   HStat.Status=HStat.ReadFromEEProm();
 
-//  Log.Verbose(F("\nStatus:")); Log.Verbose(F("\n"));
-//  Log.Verbose(F("size=")); Log.Verbose(String(sizeof(HStat.Status), DEC)); Log.Verbose(F("\n"));
-//  Log.Verbose(F("mode=")); Log.Verbose(String(HStat.Status.Mode)); Log.Verbose(F("\n"));
-//  Log.Verbose(F("Loglev=")); Log.Verbose(String(HStat.Status.Uartlev)); Log.Verbose(F("\n"));
-//  Log.Verbose(F("ClockPeriod=")); Log.Verbose(String(HStat.Status.ClockPer)); Log.Verbose(F("\n"));
   setTime(20, 45, 0, 30, 10, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
   UpdateSched();
@@ -75,7 +70,7 @@ void loop() {
       ExCommand(CP.Cmd);
     }
   }
-  //#ifdef zigbee
+  #ifdef zigbee
   if (chibiDataRcvd() == true)
   {
     int len;
@@ -106,7 +101,7 @@ void loop() {
       }
     }
   }
-  //#endif
+  #endif
   Alarm.delay(1000); // wait one second between clock display2
   if (Disp_per++ == HStat.Status.ClockPer)
   {
@@ -177,7 +172,7 @@ void ExCommand(uint8_t cmd)
         uint8_t _evnum = CP.Field[2]; Log.Verbose(String(_evnum)); Log.Verbose(F("\n"));
         HS.RdEEPROMday(_dow, _evnum);
         Log.Info(F("\n#3>"));
-        Log.Info(HS.EventToStrLong(HS.Sched.Daily.Event)); Log.Info(F("\n"));
+        Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event)); Log.Info(F("\n"));
         Log.Info(F("#3>OK\n"));
       }
       else Log.Error(F("\n#3>Num. of field is wrong\n"));

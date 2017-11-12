@@ -6,12 +6,12 @@ StatusCs::StatusCs(void)  //Default Constructor
   Status.ZBlev = _Info;
   Status.Mode = _Daily;
   Status.ClockPer = 60;
-  Status.TimeAdj = 0;
-  State=_OFF;
+  Status.TimeAdj = 0;  
   //Status.HeaterStatus = 0;
   //Status.EvCalled = 0;
   Status.LastState = 0;
   GetEEoffAddress = 5;
+  State=_OFF;
   return;
 }
 
