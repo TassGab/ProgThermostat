@@ -280,7 +280,7 @@ void ExCommand(uint8_t cmd)
         uint8_t _hours = CP.Field[1]; Log.Verbose(String(_hours * SECS_PER_HOUR)); Log.Verbose(F("\n"));
         HStat.NextState(_Out); //Setmode out of home
         TurnOFF();
-        id0 = Alarm.timerOnce(_hours, BackHome);
+        id0 = Alarm.timerOnce(_hours * SECS_PER_HOUR, BackHome);
         HStat.SaveToEEProm(HStat.Status);
         Log.Info(F("#9>OK\n"));
       }
