@@ -312,7 +312,7 @@ void ExCommand(uint8_t cmd)
 void UpdateDailySched()
 {
   Log.Info(F("Update Schedule\n"));
-  int dow = weekday() - 1;
+  int dow = weekday();// - 1;
   Alarm.free(id0);
   // optional, but safest to "forget" the ID after memory recycled
   id0 = dtINVALID_ALARM_ID;

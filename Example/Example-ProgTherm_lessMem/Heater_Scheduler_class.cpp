@@ -163,6 +163,11 @@ void HeaterSchedulerCs::RdEEPROMday(timeDayOfWeek_t dow, uint8_t _evnum)
 {
   DaySchedule_sc daysc;
   int addr = int(GetEEdaystructsize * (nEventPerDay * (dow - 1) + _evnum)) + GetEEoffAddress;
+  if(addr<0) 
+  {
+    Log.Error(F("\nAddress error\n"));
+    return;
+  }
   EEPROM.get(addr, daysc);
   Sched.Daily = DayDeepCp(daysc);
   Log.Debug(F("EEPROM read at="));
