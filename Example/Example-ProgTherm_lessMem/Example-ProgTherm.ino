@@ -35,7 +35,7 @@ void setup() {
   digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
   Log.Info(F("\nProgrammable Thermostat on Arduino Chibi\n"));
-  Log.Info(F("\nFW ver:1.0, author: Gabriele Tasselli, date: 09/11/2017\n"));
+  Log.Info(F("\nFW ver:1.0, author: Gabriele Tasselli, date: 13/11/2017\n"));
   Log.Info(F("\nHelp: #20. (new line)"));
   if (HS.GetEEPromEmpty() != 1)
   {
@@ -46,10 +46,10 @@ void setup() {
   }
   HStat.Status=HStat.ReadFromEEProm();
 
-  setTime(20, 45, 0, 30, 10, 17); // set time
+  setTime(0, 0, 0, 1, 1, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
-  UpdateSched();
-
+  //if(timeStatus()!=1) UpdateSched();
+  Log.Info(F("\nTime need to be synch\n"));
 }
 
 void loop() {
@@ -159,6 +159,7 @@ void ExCommand(uint8_t cmd)
         Log.Info("\n#2>");
         Log.Info(HS.SetEventDay(_dow, _evnum, _Tqua, _en, _onoff, _swn)); Log.Info(F("\n"));
         HS.WrEEPROMdayEv(HS.Sched.Daily);
+        UpdateSched();
         Log.Info(F("#2>OK\n"));
       }
       else Log.Error(F("\n#2>Num. of field is wrong\n"));
@@ -280,6 +281,8 @@ void ExCommand(uint8_t cmd)
         uint8_t _hours = CP.Field[1]; Log.Verbose(String(_hours * SECS_PER_HOUR)); Log.Verbose(F("\n"));
         HStat.NextState(_Out); //Setmode out of home
         TurnOFF();
+        Alarm.free(id0);
+        id0 = dtINVALID_ALARM_ID;
         id0 = Alarm.timerOnce(_hours * SECS_PER_HOUR, BackHome);
         HStat.SaveToEEProm(HStat.Status);
         Log.Info(F("#9>OK\n"));
@@ -287,7 +290,7 @@ void ExCommand(uint8_t cmd)
       else Log.Error(F("\n#9>Num. of field is wrong\n"));
       break;
     case 10: //Default Param
-      //format: #10,mempart.     (mema part=0-->all)
+      //format: #10,mempart.     (mem part=0-->all)
       if (CP.Nfield == 2)
       {
         Log.Info(F("\nCommand EEPROM Default Param"));
@@ -301,6 +304,16 @@ void ExCommand(uint8_t cmd)
       }
       else Log.Error(F("\n#10>Num. of field is wrong\n"));
       break;
+      case 11: //Force Update Schedule
+      //format: #11.
+      if (CP.Nfield == 1)
+      {
+        Log.Info(F("\nCommand Force Schedule Update"));
+        UpdateSched();
+        Log.Info(F("\n#11>OK\n"));
+      }
+      else Log.Error(F("\n#11>Num. of field is wrong\n"));
+      break;
     default:
       Log.Error(F("\n#Command Unknown\n"));
   }
@@ -311,16 +324,23 @@ void ExCommand(uint8_t cmd)
 */
 void UpdateDailySched()
 {
-  Log.Info(F("Update Schedule\n"));
+  Log.Info(F("Update Schedule Daily\n"));
   int dow = weekday();// - 1;
   Alarm.free(id0);
+  Alarm.free(idse0);
   // optional, but safest to "forget" the ID after memory recycled
   id0 = dtINVALID_ALARM_ID;
+  idse0=dtINVALID_ALARM_ID;
   if (!HS.GetNextDayEv(dow))
   {
-    id0 = Alarm.timerOnce(HS.QuartToTime(HS.Sched.Daily.Event.EvTimeQ), Event0R);
+//    Log.Verbose(F("\nSet alarm at="));
+//    Log.Verbose(String(HS.QuartToTime(HS.Sched.Daily.Event.EvTimeQ)));
+//    Log.Verbose(F("\n"));
+    id0 = Alarm.alarmOnce(HS.QuartToTime(HS.Sched.Daily.Event.EvTimeQ), Event0R);
     Log.Info(F("\n Next event: "));
     Log.Info(HS.EventToStrShort(HS.Sched.Daily.Event));
+    Log.Verbose(F("\tget="));
+    Log.Verbose(String(HS.DateTimeToStr(Alarm.read(id0))));
     Log.Info(F("\n"));
   }
   else
@@ -377,6 +397,8 @@ void EventOnce0() {
 }
 void BackHome()
 {
+  Alarm.free(id0);
+  id0 = dtINVALID_ALARM_ID;
   Log.Info(F("\nTriggered Event: BackHome\n"));
   TurnON();
   HStat.BackLastState();
@@ -387,6 +409,11 @@ void BackHome()
 
 void UpdateSchedOnce()
 {
+  Alarm.free(id0);
+  Alarm.free(idse0);
+  // optional, but safest to "forget" the ID after memory recycled
+  id0 = dtINVALID_ALARM_ID;
+  idse0=dtINVALID_ALARM_ID;
   HS.RdEEPROMevent(0);
   if (HS.Sched.EventFuture.EventCtrl.isEnabled == evEN)
   {
