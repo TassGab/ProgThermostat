@@ -3,7 +3,7 @@
 #include <EEPROM.h>
 #include "Logging_class.h"
 
-typedef enum {_Manual, _Daily, _Once, _Out} Mode_en;
+typedef enum {_Manual, _Daily, _Once, _Out, _Rec} Mode_en;
 typedef enum Heater_en: bool{_OFF,_ON} ;
 typedef enum {Event0, Event1, Event2, Event3, Event4, Event5} EventNum_sc;
 typedef struct 

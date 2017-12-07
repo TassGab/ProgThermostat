@@ -6,12 +6,12 @@ StatusCs::StatusCs(void)  //Default Constructor
   Status.ZBlev = _Info;
   Status.Mode = _Daily;
   Status.ClockPer = 60;
-  Status.TimeAdj = -10;  
+  Status.TimeAdj = -10;
   //Status.HeaterStatus = 0;
   //Status.EvCalled = 0;
   Status.LastState = 0;
   GetEEoffAddress = 5;
-  State=_OFF;
+  State = _OFF;
   return;
 }
 
@@ -63,7 +63,7 @@ void StatusCs::StatPrint()
 {
   Log.Info(F("Status=["));
   Log.Info(F("Heater=")); //Log.Info(String(Status.HeaterStatus ? "ON":"OFF"));
-  if(State) Log.Info(F("ON")); else Log.Info(F("OFF"));
+  if (State) Log.Info(F("ON")); else Log.Info(F("OFF"));
   Log.Info(F(",Mode=")); Log.Info(ModeToStr(Status.Mode));
   Log.Info(F(",UART=")); Log.Info(Log.LevToStr(Status.Uartlev));
   Log.Info(F(",ZB=")); Log.Info(Log.LevToStr(Status.ZBlev));
@@ -78,6 +78,7 @@ String StatusCs::ModeToStr(Mode_en mod)
   else if (mod == _Daily) s = "Daily";
   else if (mod == _Once) s = "Once";
   else if (mod == _Out) s = "Out";
+  else if (mod == _Rec) s = "Recovery";
   else s = "Not set";
   return s;
 }
