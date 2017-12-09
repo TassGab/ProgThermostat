@@ -35,7 +35,7 @@ void setup() {
   digitalWrite(SwHeaters, LOW);
   //HS.ClearEEProm();
   Log.Info(F("\nProgrammable Thermostat on Arduino Chibi\n"));
-  Log.Info(F("\nFW ver:1.0, author: Gabriele Tasselli, date: 13/11/2017\n"));
+  Log.Info(F("\nFW ver:1.1, author: Gabriele Tasselli, date: 13/11/2017\n"));
   Log.Info(F("\nHelp: #20. (new line)"));
   if (HS.GetEEPromEmpty() != 1)
   {
@@ -45,11 +45,14 @@ void setup() {
     HStat.SaveToEEProm(HStat.Status);
   }
   HStat.Status=HStat.ReadFromEEProm();
-
+  HStat.NextState(_Rec);
+  HStat.SaveToEEProm(HStat.Status);
   setTime(0, 0, 0, 1, 1, 17); // set time
   //Alarm.alarmRepeat(0, 0, 0, UpdateMidnight); // update schedule at midnight
   //if(timeStatus()!=1) UpdateSched();
-  Log.Info(F("\nTime need to be synch\n"));
+  Log.Info(F("\nRecovery Mode\nTime need to be synch\n"));
+  HStat.State=_OFF;
+  UpdateSchedRec();
 }
 
 void loop() {
@@ -77,7 +80,7 @@ void loop() {
     byte buf[CHB_MAX_PAYLOAD];  // this is where we store the received data
     // retrieve the data and the signal strength
     len = chibiGetData(buf);
-    Log.Info(F("\nReceived a command by ZB ")); Log.Info(String(len)); Log.Info(F("\n"));
+    Log.Debug(F("\nReceived a command by ZB ")); Log.Debug(String(len)); Log.Info(F("\n"));
     // discard the data if the length is 0. that means its a duplicate packet
     if (len > 0)
     {
@@ -219,7 +222,7 @@ void ExCommand(uint8_t cmd)
       {
         Log.Debug(F("\nCommand Change Mode: "));
         Mode_en _Mode = CP.Field[1]; Log.Verbose(String(_Mode)); Log.Verbose(",");
-        if (_Mode >= 0 and _Mode < 4)
+        if (_Mode >= 0 and _Mode < 5)
         {
           HStat.NextState(_Mode);
           HStat.SaveToEEProm(HStat.Status);
@@ -313,6 +316,19 @@ void ExCommand(uint8_t cmd)
         Log.Info(F("\n#11>OK\n"));
       }
       else Log.Error(F("\n#11>Num. of field is wrong\n"));
+      break;
+      case 20: //Print help
+        Log.Info(F("\n1) Set Time: #1,hh,mm,ss,dd,mo,yy.<cr>"));
+        Log.Info(F("\n2) Set alarm eventDay: #2,dow,evnum,quarter,en,on/off,sw1.<cr>"));
+        Log.Info(F("\n3) Read alarm eventDay: #3,dow,evnum.<cr>"));
+        Log.Info(F("\n4) Read Status: #4.<cr>"));
+        Log.Info(F("\n5) Change Status Parameters: #5,Uartlev,ZBlev,Mode,ClockPer,TimeAdj.<cr>"));
+        Log.Info(F("\n6) Change Mode: #6,Mode.<cr>"));
+        Log.Info(F("\n7) Manual on/off: #7,on/off.<cr>"));
+        Log.Info(F("\n8) Set alarm Once: #8,quarter,gg,mo,yy,en,on/off.<cr>"));
+        Log.Info(F("\n9) Out of home for some hours: #9,nhours.<cr>"));
+        Log.Info(F("\n10) Default Param: #10,mempart.<cr> (mem part=0-->all)"));
+        Log.Info(F("\n11) Force Update Schedule: #11.<cr>"));
       break;
     default:
       Log.Error(F("\n#Command Unknown\n"));
@@ -422,12 +438,37 @@ void UpdateSchedOnce()
     Log.Info(HS.EventOnceToStrShort(HS.Sched.EventFuture));
     Log.Info(F("\n"));
   }
+  return;
+}
+ void UpdateSchedRec()
+{
+  Alarm.free(id0);
+  Alarm.free(idse0);
+  // optional, but safest to "forget" the ID after memory recycled
+  id0 = dtINVALID_ALARM_ID;
+  idse0=dtINVALID_ALARM_ID;
+  if(HStat.State == _OFF)//toggles from on to off and vice-versa
+  {
+    TurnON();
+    idse0 = Alarm.timerOnce(3600,UpdateSchedRec);
+    Log.Info(F("\Rec0: 1 hour ON"));
+    Log.Info(F("\n")); 
+  }
+  else
+  {
+    TurnOFF();
+    idse0 = Alarm.timerOnce(14400,UpdateSchedRec);
+    Log.Info(F("\Rec0: 4 hours OFF"));
+    Log.Info(F("\n")); 
+  }
+ return;
 }
 //-----------------------------------------
 void UpdateSched()
 {
   if (HStat.Status.Mode == _Daily) UpdateDailySched();
   else if (HStat.Status.Mode == _Once) UpdateSchedOnce();
+  else if (HStat.Status.Mode == _Rec) UpdateSchedRec();
   return;
 }
 void TurnON()
